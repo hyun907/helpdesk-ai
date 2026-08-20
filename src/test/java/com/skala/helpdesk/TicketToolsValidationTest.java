@@ -61,7 +61,8 @@ class TicketToolsValidationTest {
                 new HelpDeskProperties.Rag(5, 0.32),
                 new HelpDeskProperties.Memory(20),
                 new HelpDeskProperties.Fallback("gpt-4o"),
-                new HelpDeskProperties.Recovery(WINDOW_DAYS));
+                new HelpDeskProperties.Recovery(WINDOW_DAYS),
+                new HelpDeskProperties.Agent(8));
 
         tools = new TicketTools(tickets, characters, sanctions, props);
     }

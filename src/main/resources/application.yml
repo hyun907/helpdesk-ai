@@ -72,6 +72,8 @@ helpdesk:
     model: gpt-4o          # 주 모델(gpt-4o-mini)과 다른 모델이어야 의미가 있다
   recovery:
     claim-window-days: 14   # 정책 문서(item-recovery-policy.md)와 같은 값을 유지한다
+  agent:
+    max-tool-calls: 8       # 한 요청에서 허용하는 도구 호출 수. 넘으면 끊는다
 
 server:
   port: 8081          # 8080 은 다른 앱이 점유할 수 있어 분리한다

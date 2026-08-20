@@ -1,6 +1,9 @@
 package com.skala.helpdesk.advisor;
 
+import com.skala.helpdesk.config.HelpDeskProperties;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.ai.chat.model.ToolContext;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.UUID;
@@ -48,9 +51,17 @@ public class ToolAuditAspect {
     /** 인자 하나가 로그를 뒤덮지 않도록 자른다. 문의 본문은 수천 자가 들어올 수 있다. */
     private static final int MAX_ARG_LENGTH = 200;
 
-    private final MeterRegistry registry;
+    /** 한 요청 안에서 소비한 도구 호출 수를 세는 자리. ToolContext 를 통해 요청 단위로 격리된다. */
+    public static final String CALL_BUDGET = "toolCallBudget";
 
-    public ToolAuditAspect(MeterRegistry registry) {
+    private static final String BUDGET_EXCEEDED =
+            "요청을 완료하지 못했습니다. 조건을 좁혀 다시 요청해 주시기 바랍니다.";
+
+    private final MeterRegistry registry;
+    private final HelpDeskProperties props;
+
+    public ToolAuditAspect(MeterRegistry registry, HelpDeskProperties props) {
+        this.props = props;
         this.registry = registry;
     }
 
@@ -60,6 +71,18 @@ public class ToolAuditAspect {
         String user = currentUser();
         String toolName = toolNameOf(joinPoint);
         String args = maskArgs(joinPoint.getArgs());
+
+        // 상한을 넘으면 실행하지 않고 끊는다.
+        // 에이전트는 스스로 멈추지 않는다. 결과가 애매하면 같은 도구를 계속 부르고,
+        // 그 사이 토큰과 지연은 사용자가 아니라 우리가 부담한다.
+        // 감사 지점에서 세는 이유는 여기가 모든 도구가 반드시 지나는 유일한 길목이기 때문이다.
+        // 도구마다 세면 새 도구를 추가할 때 빠뜨린다.
+        if (exceededBudget(joinPoint) && returnsString(joinPoint)) {
+            log.warn("[{}] 도구 호출 상한 초과 · user={} · tool={} · limit={}",
+                    traceId, user, toolName, props.agent().maxToolCalls());
+            registry.counter("ai.tool.calls", "tool", toolName, "result", "budget_exceeded").increment();
+            return BUDGET_EXCEEDED;
+        }
 
         long started = System.nanoTime();
         try {
@@ -83,6 +106,26 @@ public class ToolAuditAspect {
      * 인자 배열을 로그 한 조각으로 만든다.
      * 값의 형태(길이·개수)는 남기되 내용은 지운다 — 조사할 때 필요한 건 "무엇이 왔나"의 윤곽이다.
      */
+    /** 호출 인자에서 ToolContext 를 찾아 예산을 하나 소비한다. 넘었으면 true. */
+    private boolean exceededBudget(ProceedingJoinPoint joinPoint) {
+        for (Object arg : joinPoint.getArgs()) {
+            if (arg instanceof ToolContext context) {
+                Object holder = context.getContext().get(CALL_BUDGET);
+                if (holder instanceof AtomicInteger counter) {
+                    return counter.incrementAndGet() > props.agent().maxToolCalls();
+                }
+                return false;   // 예산이 안 실려 왔다 — 테스트 등 직접 호출 경로다
+            }
+        }
+        return false;
+    }
+
+    /** 상한 문구를 돌려주려면 반환 타입이 String 이어야 한다. 아니면 그냥 진행한다. */
+    private boolean returnsString(ProceedingJoinPoint joinPoint) {
+        return joinPoint.getSignature() instanceof MethodSignature signature
+                && signature.getReturnType() == String.class;
+    }
+
     public static String maskArgs(Object[] args) {
         if (args == null || args.length == 0) {
             return "[]";

@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * 검색 임계값이나 메모리 윈도우 크기를 바꾸려고 코드를 고치는 일이 없어야 한다.
  */
 @ConfigurationProperties(prefix = "helpdesk")
-public record HelpDeskProperties(Rag rag, Memory memory, Fallback fallback, Recovery recovery) {
+public record HelpDeskProperties(Rag rag, Memory memory, Fallback fallback, Recovery recovery, Agent agent) {
 
     public record Rag(
             int topK,           // 검색해서 가져올 청크 개수
@@ -29,5 +29,13 @@ public record HelpDeskProperties(Rag rag, Memory memory, Fallback fallback, Reco
      */
     public record Recovery(
             int claimWindowDays
+    ) {}
+
+    /**
+     * 에이전트 루프 상한. 상한 없는 에이전트는 비용 사고로 직행한다.
+     * 결과가 애매하면 모델은 같은 도구를 계속 부르고, 그 비용은 우리가 낸다.
+     */
+    public record Agent(
+            int maxToolCalls
     ) {}
 }
