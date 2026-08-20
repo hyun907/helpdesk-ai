@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────
+# prod — 운영 (운영 프로파일)
+# ─────────────────────────────────────────────────────────────
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never
+  ai:
+    openai:
+      chat:
+        options:
+          model: gpt-4o
+          temperature: 0.2
+    chat:
+      observations:
+        log-prompt: false       # 운영 필수 — 프롬프트 원문이 로그로 새어 나간다
+      client:
+        observations:
+          log-prompt: false
+
+springdoc:
+  api-docs:
+    enabled: false              # 운영에서는 문서를 닫는다 (운영에서는 API 문서를 닫는다)
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    com.skala: INFO

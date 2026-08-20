@@ -1,0 +1,83 @@
+# ─────────────────────────────────────────────────────────────
+# 공통 설정 — 프로파일로 환경 차이를 표현한다
+#   API 키는 환경변수로만 주입한다. 소스에 절대 적지 않는다.
+#   키가 없어도 기동은 된다(기동은 된다) — 호출할 때 401 로 드러난다.
+# ─────────────────────────────────────────────────────────────
+spring:
+  application:
+    name: helpdesk-ai
+
+  profiles:
+    default: dev
+
+  datasource:
+    url: jdbc:postgresql://localhost:5434/springai
+    username: springai
+    password: springai
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true      # data.sql 을 테이블 생성 뒤에 실행
+    open-in-view: false
+    properties:
+      hibernate.format_sql: true
+
+  sql:
+    init:
+      mode: always
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:sk-not-set}    # 자리표시자 — 없으면 호출 시 401
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+      embedding:
+        options:
+          model: text-embedding-3-small        # 1536 차원 (임베딩 모델 설정 누락은 검색이 조용히 비는 원인이 된다)
+
+    vectorstore:
+      pgvector:
+        initialize-schema: true                # 테이블 자동 생성
+        dimensions: 1536                       # 임베딩 모델과 반드시 일치 (불일치하면 저장 시점에 오류 또는 엉뚱한 결과)
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always          # 대화 이력 테이블 자동 생성
+
+# ─────────────────────────────────────────────────────────────
+# 우리 서비스 설정 — 코드에 상수를 남기지 않는다 (코드에 상수를 남기지 않는다)
+# ─────────────────────────────────────────────────────────────
+helpdesk:
+  rag:
+    top-k: 5
+    threshold: 0.62
+  memory:
+    max-messages: 20
+
+server:
+  port: 8081          # 8080 은 다른 앱이 점유할 수 있어 분리한다
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+
+logging:
+  level:
+    com.skala: DEBUG

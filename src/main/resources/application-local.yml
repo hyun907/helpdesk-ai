@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────
+# local — Docker 없이 돌리는 프로파일 (Docker 없이 계층만 확인한다)
+#   H2 인메모리 + 인메모리 VectorStore. 재시작하면 전부 사라진다.
+#   실행:  SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
+# ─────────────────────────────────────────────────────────────
+spring:
+  datasource:
+    url: jdbc:h2:mem:helpdesk;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+  autoconfigure:
+    exclude:
+      # pgvector·JDBC 메모리 자동구성을 끈다 — 인메모리로 대체된다
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+
+helpdesk:
+  rag:
+    top-k: 3          # 로컬은 빠르게
