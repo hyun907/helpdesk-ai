@@ -10,6 +10,9 @@ import com.skala.helpdesk.repository.TicketRepository;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.skala.helpdesk.config.HelpDeskProperties;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ToolContext;
@@ -50,19 +53,28 @@ public class TicketTools {
     private static final String CHARACTER_NOT_FOUND =
             "해당 캐릭터를 찾을 수 없습니다. 본인 계정의 캐릭터로만 복구를 신청할 수 있습니다.";
 
+    private static final String NEED_EXACT_DATE =
+            "손실 날짜를 yyyy-MM-dd 형식으로 알려 주셔야 접수할 수 있습니다. 예: 2026-08-18";
+
+    private static final String FUTURE_DATE =
+            "손실 날짜가 미래로 되어 있습니다. 실제로 사라진 날짜를 다시 알려 주시기 바랍니다.";
+
     private static final String SANCTION_NOT_FOUND =
             "해당 제재 내역을 찾을 수 없습니다. 본인 계정에 부과된 제재만 이의신청할 수 있습니다.";
 
     private final TicketRepository tickets;
     private final GameCharacterRepository characters;
     private final SanctionRepository sanctions;
+    private final HelpDeskProperties props;
 
     public TicketTools(TicketRepository tickets,
                        GameCharacterRepository characters,
-                       SanctionRepository sanctions) {
+                       SanctionRepository sanctions,
+                       HelpDeskProperties props) {
         this.tickets = tickets;
         this.characters = characters;
         this.sanctions = sanctions;
+        this.props = props;
     }
 
     @Tool(name = "submitItemRecovery",
@@ -75,8 +87,10 @@ public class TicketTools {
             String characterId,
             @ToolParam(description = "사라진 아이템 이름. 이용자가 말한 그대로 적는다. 예: 새벽의 검")
             String itemName,
-            @ToolParam(description = "손실이 발생한 시점. 이용자가 말한 표현을 그대로 적는다. 예: 2026-08-18 저녁 9시경")
-            String occurredAt,
+            @ToolParam(description = "손실이 발생한 날짜. 반드시 yyyy-MM-dd 형식으로 적는다. 예: 2026-08-18. "
+                    + "이용자가 '어제'처럼 말했다면 대화 앞부분의 [오늘 ...] 을 기준으로 계산해 실제 날짜로 바꾼다. "
+                    + "날짜를 특정할 수 없으면 이 도구를 부르지 말고 이용자에게 먼저 되묻는다.")
+            String occurredOn,
             ToolContext toolContext) {
 
         String ownerId = HelpDeskService.callerId(toolContext);
@@ -88,7 +102,30 @@ public class TicketTools {
             return CHARACTER_NOT_FOUND;
         }
 
-        String detail = trim("아이템 '%s' / 손실 시점: %s".formatted(itemName, occurredAt));
+        LocalDate lostOn;
+        try {
+            lostOn = LocalDate.parse(occurredOn.trim());
+        } catch (DateTimeParseException | NullPointerException e) {
+            // 모델이 날짜를 못 정하면 지어낸다. 형식을 못 박고, 안 맞으면 되묻게 한다.
+            log.info("복구 접수 거절 — 날짜 파싱 실패 occurredOn={}", occurredOn);
+            return NEED_EXACT_DATE;
+        }
+
+        LocalDate today = LocalDate.now();
+        if (lostOn.isAfter(today)) {
+            log.info("복구 접수 거절 — 미래 날짜 lostOn={}", lostOn);
+            return FUTURE_DATE;
+        }
+
+        // 기한이 지난 신청은 접수하지 않는다. 접수해 두면 반려될 것이 담당자 검토 큐를 채운다.
+        int windowDays = props.recovery().claimWindowDays();
+        if (lostOn.isBefore(today.minusDays(windowDays))) {
+            log.info("복구 접수 거절 — 기한 초과 lostOn={} window={}일", lostOn, windowDays);
+            return ("아이템 복구는 손실일로부터 %d일 이내에만 신청할 수 있습니다. "
+                    + "알려 주신 %s 는 기한이 지나 접수되지 않습니다.").formatted(windowDays, lostOn);
+        }
+
+        String detail = trim("아이템 '%s' / 손실일: %s".formatted(itemName, lostOn));
         Ticket ticket = tickets.save(new Ticket(nextTicketNo(), ownerId, characterId,
                 TicketType.ITEM_RECOVERY, detail));
 
@@ -116,6 +153,15 @@ public class TicketTools {
         if (sanction == null) {
             log.info("이의신청 접수 거절 sanctionId={} — 없거나 다른 계정 소유", sanctionId);
             return SANCTION_NOT_FOUND;
+        }
+
+        // 정책상 이의신청은 제재 1건당 1회다. 중복 접수를 막지 않으면 같은 건이 큐에 쌓인다.
+        boolean already = tickets.findByOwnerIdOrderByCreatedAtDesc(ownerId).stream()
+                .filter(t -> t.getType() == TicketType.SANCTION_APPEAL)
+                .anyMatch(t -> t.getDetail() != null && t.getDetail().startsWith("제재 " + sanctionId + "("));
+        if (already) {
+            log.info("이의신청 접수 거절 sanctionId={} — 이미 접수된 건이 있다", sanctionId);
+            return "해당 제재에 대한 이의신청은 이미 접수되어 있습니다. 이의신청은 제재 1건당 1회만 가능합니다.";
         }
 
         String detail = trim("제재 %s(%s) 이의신청 / 사유: %s"

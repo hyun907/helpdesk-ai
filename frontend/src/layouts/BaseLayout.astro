@@ -21,7 +21,8 @@ const path = Astro.url.pathname;
       <nav>
         <a href="/" class:list={[{ active: path === '/' }]}>상담</a>
         <a href="/docs" class:list={[{ active: path.startsWith('/docs') }]}>운영 정책</a>
-        <a href="/admin" class:list={[{ active: path.startsWith('/admin') }]}>검색 점검</a>
+        <a href="/admin" class:list={[{ active: path === '/admin' }]}>검색 점검</a>
+        <a href="/admin/tickets" class:list={[{ active: path.startsWith('/admin/tickets') }]}>승인 대기</a>
       </nav>
     </header>
 

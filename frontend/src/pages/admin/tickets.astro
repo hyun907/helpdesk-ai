@@ -1,0 +1,92 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TicketQueue from '../../components/TicketQueue.jsx';
+---
+
+<BaseLayout
+  title="승인 대기"
+  description="도구가 접수한 신청 건을 사람이 승인하거나 반려합니다."
+>
+  <h1>승인 대기</h1>
+  <p class="lede">
+    도구는 <strong>접수까지만</strong> 합니다. 아이템을 실제로 지급하거나 제재를 푸는 일은
+    이 화면에서 사람이 누릅니다 — 모델은 이 경로에 닿을 수 없습니다.
+  </p>
+
+  <TicketQueue client:load />
+</BaseLayout>
+
+<style>
+  h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+  .lede { color: var(--fg-muted); margin: 0 0 2rem; }
+  .lede strong { color: var(--fg); }
+</style>
+
+<style is:global>
+  .queue { display: flex; flex-direction: column; gap: 0.9rem; }
+
+  .queue-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 0.9rem; border-bottom: 1px solid var(--border);
+  }
+  .queue .count { font-size: 0.9rem; color: var(--fg-muted); }
+  .queue .count strong { color: var(--fg); font-size: 1rem; }
+
+  .queue .notice {
+    padding: 1rem 1.15rem; margin: 0 0 0.75rem;
+    font-size: 0.92rem; color: var(--fg-muted);
+    background: var(--bg-soft);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .queue .notice.bad { color: #c0392b; background: transparent; border-color: currentColor; }
+
+  .queue .tickets { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+  .queue .tickets li {
+    padding: 1rem 1.2rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  /* 처리된 건은 눈에서 물러나되 사라지지는 않는다 — 방금 무엇을 눌렀는지 남아 있어야 한다. */
+  .queue .tickets li.resolved { opacity: 0.6; }
+
+  .queue .t-head {
+    display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    margin-bottom: 0.55rem;
+  }
+  .queue .no { font-size: 0.85rem; font-weight: 700; }
+  .queue .type {
+    font-size: 0.76rem; padding: 0.15rem 0.5rem; border-radius: 999px;
+  }
+  /* 두 종류는 되돌리기 어려운 방향이 다르다 — 재화 생성 vs 제재 효력 해제 */
+  .queue .type.recovery { background: var(--accent-soft); color: var(--fg); }
+  .queue .type.appeal { background: #f6e5c3; color: #6b4b12; }
+  .queue .when { font-size: 0.78rem; color: var(--fg-muted); margin-left: auto; }
+
+  .queue .detail {
+    margin: 0 0 0.85rem; font-size: 0.93rem; line-height: 1.65;
+    overflow-wrap: break-word;
+  }
+
+  .queue .actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .queue .actions button {
+    padding: 0.4rem 0.9rem;
+    font: inherit; font-size: 0.86rem; font-weight: 600;
+    border-radius: var(--radius); border: 1px solid var(--border);
+    background: var(--bg); color: var(--fg);
+    cursor: pointer;
+  }
+  .queue button.approve:hover { border-color: var(--accent); color: var(--accent); }
+  .queue button.reject:hover { border-color: #c0392b; color: #c0392b; }
+  .queue button.confirm-approve { background: var(--accent); color: #fff; border-color: transparent; }
+  .queue button.confirm-reject { background: #c0392b; color: #fff; border-color: transparent; }
+  .queue button.ghost {
+    font-weight: 500; color: var(--fg-muted); background: transparent;
+  }
+  .queue button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .queue .warn { font-size: 0.8rem; color: #c0392b; font-weight: 600; }
+
+  .queue .outcome { margin: 0; font-size: 0.88rem; color: var(--fg-muted); }
+  .queue .outcome strong { color: var(--fg); }
+  .queue .outcome.bad { color: #c0392b; }
+</style>

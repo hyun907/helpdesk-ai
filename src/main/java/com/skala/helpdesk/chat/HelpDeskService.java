@@ -5,6 +5,7 @@ import com.skala.helpdesk.tools.CharacterTools;
 import com.skala.helpdesk.tools.TicketTools;
 import java.time.Duration;
 import java.util.LinkedHashSet;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +85,21 @@ public class HelpDeskService {
     // 동기 상담
     // ──────────────────────────────────────────────────────────────
 
+    /**
+     * 오늘 날짜를 <b>사용자 메시지</b>에 붙인다. 시스템 프롬프트가 아니라 여기인 이유가 있다.
+     *
+     * <p>모델은 오늘이 며칠인지 모른다. 그 상태에서 "어제 사라졌어요" 같은 표현을 도구 인자로
+     * 옮기라고 하면 그럴듯한 날짜를 지어낸다. 실제로 3년 전 날짜가 신청서에 적힌 적이 있고,
+     * 복구 정책은 14일 이내라 그 신청은 애초에 성립할 수 없는 것이었다.
+     *
+     * <p>시스템 프롬프트에 넣지 않는 이유는 캐시다. 시스템 프롬프트는 매 요청 동일해야
+     * 공급자의 프롬프트 캐싱이 걸린다. 날짜가 하루만 바뀌어도 앞부분이 통째로 무효가 된다.
+     * 가변값은 뒤쪽(사용자 메시지)에 둔다.
+     */
+    private String withToday(String question) {
+        return "[오늘 %s]\n%s".formatted(LocalDate.now(), question);
+    }
+
     public AnswerDto ask(String question, String userId, String sessionId) {
         // 요청마다 새로 만든다. 필드에 두면 동시에 들어온 다른 이용자의 도구 호출이 섞여 집계된다.
         Set<String> toolTrace = ConcurrentHashMap.newKeySet();
@@ -92,7 +108,7 @@ public class HelpDeskService {
         // content() 는 문자열만 준다 — 어떤 문서를 근거로 삼았는지는 context() 에만 실려 있고,
         // 한 번 버리면 다시 만들 수 없다(검색을 또 돌리면 결과가 달라질 수 있다).
         ChatClientResponse response = chatClient.prompt()
-                .user(question)
+                .user(withToday(question))
                 .tools(characterTools, ticketTools)
                 .toolContext(Map.of(USER_ID, userId, TOOL_TRACE, toolTrace))
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID,
@@ -132,7 +148,7 @@ public class HelpDeskService {
         String conversationId = conversationId(TENANT, userId, sessionId);
 
         Flux<String> tokens = chatClient.prompt()
-                .user(question)
+                .user(withToday(question))
                 .tools(characterTools, ticketTools)
                 .toolContext(Map.of(USER_ID, userId, TOOL_TRACE, toolTrace))
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
