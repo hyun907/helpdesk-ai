@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -67,6 +68,24 @@ public class ApiExceptionHandler {
             TicketApprovalService.TicketAlreadyResolvedException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse("이미 처리된 신청 건입니다.", null));
+    }
+
+    /**
+     * 읽을 수 없는 요청 본문은 400 이다.
+     *
+     * <p>포괄 핸들러에 맡기면 <b>클라이언트가 보낸 깨진 JSON 이 500 으로 나간다.</b>
+     * 그러면 호출하는 쪽은 자기 요청이 잘못됐다는 것을 알 수 없어 그대로 재시도하고,
+     * 우리 쪽은 서버 오류 지표가 올라가 장애로 보인다. 양쪽 다 엉뚱한 곳을 보게 된다.
+     * 실제로 부하 측정 중 스크립트가 만든 깨진 본문이 500 으로 집계돼 애플리케이션 장애로 오인된 적이 있다.
+     *
+     * <p>파싱 실패 사유는 응답에 싣지 않는다. 어느 위치에서 무엇을 기대했는지가 그대로 나가면
+     * 요청 스키마를 탐색하는 단서가 된다. 상세는 로그에만 남긴다.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableBody(HttpMessageNotReadableException e) {
+        log.warn("요청 본문을 읽지 못했다 — {}", e.getMostSpecificCause().toString());
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse("요청 본문을 읽을 수 없습니다. JSON 형식을 확인해 주세요.", null));
     }
 
     @ExceptionHandler(Exception.class)
