@@ -25,7 +25,7 @@ import reactor.core.publisher.Flux;
 @Component
 public class AuditAdvisor implements CallAdvisor, StreamAdvisor {
 
-    public static final int ORDER = 0;
+    public static final int ORDER = AdvisorOrder.AUDIT;
     private static final Logger log = LoggerFactory.getLogger(AuditAdvisor.class);
 
     @Override

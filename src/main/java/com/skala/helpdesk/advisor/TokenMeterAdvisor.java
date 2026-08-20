@@ -23,7 +23,7 @@ import reactor.core.publisher.Flux;
 @Component
 public class TokenMeterAdvisor implements CallAdvisor, StreamAdvisor {
 
-    public static final int ORDER = 10;
+    public static final int ORDER = AdvisorOrder.TOKEN_METER;
 
     private final MeterRegistry registry;
 
