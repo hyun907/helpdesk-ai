@@ -38,8 +38,8 @@ public class GoldenSet {
     public GoldenSet(@Value("classpath:/eval/golden.json") Resource goldenFile) {
         this.cases = load(goldenFile);
         validate(this.cases, goldenFile);
-        log.info("골든셋 적재 완료 location={} cases={} 범위밖문항={}",
-                goldenFile.getFilename(), cases.size(), countOutOfScope());
+        log.info("골든셋 적재 완료 location={} cases={} 범위밖문항={} 멀티턴문항={}",
+                goldenFile.getFilename(), cases.size(), countOutOfScope(), countMultiTurn());
     }
 
     /** 채점 대상 전체. 순서는 파일에 적힌 순서 그대로 — 실패 로그를 파일과 대조하기 쉬워야 한다. */
@@ -54,6 +54,14 @@ public class GoldenSet {
     /** 문서에 답이 없어야 정상인 문항 수. 이 값이 0 이면 지어내기를 아예 못 잡는 세트라는 뜻이다. */
     public long countOutOfScope() {
         return cases.stream().filter(GoldenCase::outOfScope).count();
+    }
+
+    /**
+     * 준비 턴이 붙은 문항 수. 이 값이 0 이면 맥락 유지가 깨져도 전 문항 초록불인 세트다.
+     * 단일 턴만 있는 세트는 "3턴 이상 맥락을 유지한다"는 요구사항을 한 번도 확인하지 않는다.
+     */
+    public long countMultiTurn() {
+        return cases.stream().filter(GoldenCase::isMultiTurn).count();
     }
 
     private static List<GoldenCase> load(Resource goldenFile) {
@@ -86,6 +94,20 @@ public class GoldenSet {
             }
             if (c.must().stream().anyMatch(k -> k == null || k.isBlank())) {
                 throw new IllegalStateException(where + " must 에 빈 키워드가 있다 — 항상 통과한다");
+            }
+            // 빈 준비 턴은 모델 호출만 한 번 더 하고 맥락은 쌓지 않는다. 조용히 넘어가면 원인을 못 찾는다.
+            if (c.setup().stream().anyMatch(s -> s == null || s.isBlank())) {
+                throw new IllegalStateException(where + " setup 에 빈 문장이 있다 — 맥락을 쌓지 못한다");
+            }
+            // 빈 금지어는 모든 답변에 들어 있는 것으로 판정되어 문항을 항상 실패시킨다. must 의 반대 사고다.
+            if (c.mustNot().stream().anyMatch(k -> k == null || k.isBlank())) {
+                throw new IllegalStateException(where + " mustNot 에 빈 키워드가 있다 — 항상 실패한다");
+            }
+            // 같은 문자열이 양쪽에 있으면 어떤 답변도 통과할 수 없다. 눈으로는 잘 안 보인다.
+            String collision = c.must().stream().filter(c.mustNot()::contains).findFirst().orElse(null);
+            if (collision != null) {
+                throw new IllegalStateException(
+                        where + " must 와 mustNot 에 같은 키워드가 있다 — 통과가 불가능하다: " + collision);
             }
         }
     }
