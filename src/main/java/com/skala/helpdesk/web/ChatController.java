@@ -18,8 +18,8 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.security.Principal;
 import reactor.core.publisher.Flux;
 
 /**
@@ -49,23 +49,20 @@ public class ChatController {
             @ApiResponse(responseCode = "200", description = "응답 생성"),
             @ApiResponse(responseCode = "400", description = "질문이 비었거나 길이 제한을 넘음")})
     public AnswerDto ask(
-            // Phase 7 에서 Principal 로 교체한다. 지금은 요청 파라미터라
-            // 값을 아무거나 넣어도 통과한다 — 인가는 아직 없다는 뜻이다.
-            @Parameter(description = "계정 ID", example = "player1") @RequestParam String userId,
+            Principal principal,
             @Valid @RequestBody AskRequest request) {
-        return helpDeskService.ask(request.question(), userId, request.sessionId());
+        return helpDeskService.ask(request.question(), principal.getName(), request.sessionId());
     }
 
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "상담 (스트리밍)",
                description = "token 이벤트로 답변 조각을 흘리고, 마지막에 sources 이벤트로 근거 문서를 한 번 내보낸다.")
     public Flux<ServerSentEvent<Object>> stream(
-            // Phase 7 에서 Principal 로 교체한다.
-            @Parameter(description = "계정 ID", example = "player1") @RequestParam String userId,
+            Principal principal,
             @Valid @RequestBody AskRequest request) {
 
         HelpDeskService.StreamSession session =
-                helpDeskService.streamWithSources(request.question(), userId, request.sessionId());
+                helpDeskService.streamWithSources(request.question(), principal.getName(), request.sessionId());
 
         Flux<ServerSentEvent<Object>> tokens = session.tokens()
                 .map(token -> ServerSentEvent.builder((Object) token).event("token").build());

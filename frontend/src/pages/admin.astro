@@ -1,0 +1,143 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ChunkInspector from '../components/ChunkInspector.jsx';
+---
+
+<BaseLayout
+  title="검색 점검"
+  description="벡터 스토어에서 실제로 무엇이 검색되는지 점수와 함께 확인합니다."
+>
+  <h1>검색 점검</h1>
+  <p class="lede">
+    답변을 만들기 전에 <strong>무엇이 검색되는지</strong> 먼저 봅니다.
+    검색이 잘못됐는데 프롬프트를 고치는 일을 막기 위한 창구입니다.
+  </p>
+
+  {/* client:load — 이 페이지에서 유일하게 자바스크립트가 실리는 지점이다.
+      나머지(헤더·문서 페이지)는 전부 정적 HTML 로 나간다. */}
+  <ChunkInspector client:load />
+</BaseLayout>
+
+<style>
+  h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+  .lede { color: var(--fg-muted); margin: 0 0 2rem; }
+  .lede strong { color: var(--fg); }
+</style>
+
+<style is:global>
+  /* ── 검색 컨트롤 ─────────────────────────────────── */
+  .inspector .controls {
+    display: flex; gap: 0.6rem; align-items: stretch; flex-wrap: wrap;
+    margin-bottom: 0.85rem;
+  }
+  .inspector input[type='search'] {
+    flex: 1 1 18rem; min-width: 0;
+    padding: 0.6rem 0.85rem;
+    font: inherit; font-size: 0.95rem;
+    color: var(--fg); background: var(--bg);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .inspector input:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent;
+  }
+  .inspector .topk {
+    display: flex; align-items: center; gap: 0.45rem;
+    padding: 0 0.7rem;
+    font-size: 0.82rem; color: var(--fg-muted);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .inspector .topk input {
+    width: 3.4rem; padding: 0.35rem 0.4rem;
+    font: inherit; font-size: 0.9rem;
+    color: var(--fg); background: transparent;
+    border: 0; border-left: 1px solid var(--border); border-radius: 0;
+  }
+  .inspector button {
+    padding: 0.6rem 1.1rem;
+    font: inherit; font-size: 0.92rem; font-weight: 600;
+    color: #fff; background: var(--accent);
+    border: 1px solid transparent; border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .inspector button:hover:not(:disabled) { filter: brightness(1.08); }
+  .inspector button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .inspector button.ghost {
+    color: var(--fg-muted); background: transparent; border-color: var(--border);
+    font-weight: 500; padding: 0.45rem 0.8rem; font-size: 0.85rem;
+  }
+  .inspector button.ghost:hover:not(:disabled) { color: var(--fg); border-color: var(--fg-muted); }
+  .inspector button.danger {
+    background: #c0392b; color: #fff; border-color: transparent;
+    padding: 0.45rem 0.8rem; font-size: 0.85rem;
+  }
+
+  .inspector .ingest-row {
+    display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    padding-bottom: 1.5rem; margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .inspector .hint { font-size: 0.82rem; color: var(--fg-muted); }
+  .inspector .hint.ok { color: var(--accent); }
+  .inspector .hint.bad { color: #c0392b; }
+
+  .inspector .notice {
+    padding: 1rem 1.15rem; margin: 0;
+    font-size: 0.92rem; color: var(--fg-muted);
+    background: var(--bg-soft);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .inspector .notice strong { color: var(--fg); }
+  .inspector .notice.bad {
+    color: #c0392b; background: transparent; border-color: currentColor;
+  }
+
+  /* ── 검색 결과 ───────────────────────────────────── */
+  .inspector .results { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+  .inspector .results li {
+    display: grid; grid-template-columns: 2rem 1fr; gap: 0.75rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .inspector .rank {
+    font-size: 0.8rem; font-weight: 700; color: var(--fg-muted);
+    text-align: right; padding-top: 0.15rem;
+  }
+  .inspector .body { min-width: 0; }
+  .inspector .head {
+    display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+  .inspector .head a { font-weight: 600; font-size: 0.95rem; }
+  .inspector .heading {
+    font-size: 0.8rem; color: var(--fg);
+    padding: 0.1rem 0.45rem;
+    background: var(--accent-soft); border-radius: 4px;
+  }
+  .inspector .version { font-size: 0.78rem; color: var(--fg-muted); }
+
+  .inspector .score {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 0.55rem;
+  }
+  .inspector .bar {
+    flex: 1 1 auto; height: 6px; min-width: 4rem;
+    background: var(--bg-inset); border-radius: 3px; overflow: hidden;
+  }
+  .inspector .bar span { display: block; height: 100%; background: var(--accent); }
+  .inspector .num {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.82rem; font-variant-numeric: tabular-nums;
+  }
+  .inspector .drop {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem; color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  /* 낙차가 큰 지점 — 임계값을 여기쯤 두라는 신호다. */
+  .inspector .drop.big { color: #c0392b; font-weight: 700; }
+
+  .inspector .preview {
+    margin: 0; font-size: 0.88rem; line-height: 1.65; color: var(--fg-muted);
+  }
+</style>

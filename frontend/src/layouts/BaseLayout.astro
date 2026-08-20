@@ -1,0 +1,126 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+const path = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · HelpDesk AI</title>
+    {description && <meta name="description" content={description} />}
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">HelpDesk<span>AI</span></a>
+      <nav>
+        <a href="/" class:list={[{ active: path === '/' }]}>상담</a>
+        <a href="/docs" class:list={[{ active: path.startsWith('/docs') }]}>운영 정책</a>
+        <a href="/admin" class:list={[{ active: path.startsWith('/admin') }]}>검색 점검</a>
+      </nav>
+    </header>
+
+    <main><slot /></main>
+
+    <footer class="site-footer">
+      정책 원문은 <code>src/main/resources/docs/</code> 의 파일을 그대로 렌더링합니다 —
+      RAG가 색인하는 파일과 같은 원본입니다.
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f7f8fa;
+    --bg-inset: #eef0f4;
+    --fg: #1b1f24;
+    --fg-muted: #5c6570;
+    --border: #dfe3e8;
+    --accent: #2f6feb;
+    --accent-soft: #e8f0fe;
+    --mark: #fff3c4;
+    --radius: 10px;
+    --maxw: 860px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a;
+      --bg-soft: #1b1f23;
+      --bg-inset: #22272c;
+      --fg: #e6e9ec;
+      --fg-muted: #9aa4ae;
+      --border: #2e353c;
+      --accent: #6ea8ff;
+      --accent-soft: #1d2b45;
+      --mark: #4a3f12;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  /* scroll-behavior: smooth 는 두지 않는다.
+     해시가 붙은 URL 로 처음 진입할 때(= 출처 링크로 들어오는 경로) 브라우저가
+     레이아웃이 잡히기 전에 스크롤을 시작해 목표 조항을 지나쳐 버린다.
+     즉시 점프가 sticky 헤더 보정(scroll-padding-top)과도 정확히 맞는다. */
+  html { scroll-padding-top: 5.5rem; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+      Pretendard, 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+    word-break: keep-all;      /* 한글은 어절 단위로 끊는다 */
+    overflow-wrap: break-word;
+  }
+
+  /* ── 헤더 ───────────────────────────────────────── */
+  .site-header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 2rem;
+    padding: 0.85rem 1.5rem;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em;
+    color: var(--fg); text-decoration: none;
+  }
+  .brand span { color: var(--accent); }
+  .site-header nav { display: flex; gap: 1.25rem; }
+  .site-header nav a {
+    color: var(--fg-muted); text-decoration: none; font-size: 0.92rem;
+    padding-bottom: 2px; border-bottom: 2px solid transparent;
+  }
+  .site-header nav a:hover { color: var(--fg); }
+  .site-header nav a.active { color: var(--fg); border-bottom-color: var(--accent); }
+
+  main { max-width: var(--maxw); margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+  .site-footer {
+    max-width: var(--maxw); margin: 0 auto;
+    padding: 1.5rem 1.5rem 3rem;
+    border-top: 1px solid var(--border);
+    color: var(--fg-muted); font-size: 0.85rem; line-height: 1.6;
+  }
+
+  a { color: var(--accent); }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+    font-size: 0.88em;
+    background: var(--bg-inset);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+  }
+</style>

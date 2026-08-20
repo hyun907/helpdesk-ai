@@ -1,0 +1,6 @@
+# 프런트엔드 빌드 산출물 — 백엔드 트리를 오염시키지 않는다
+node_modules/
+dist/
+.astro/
+*.log
+.DS_Store

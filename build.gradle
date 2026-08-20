@@ -51,6 +51,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     // Boot 4.x 는 테스트 슬라이스를 모듈별 아티팩트로 분리했다 (@DataJpaTest 등)
     testImplementation 'org.springframework.boot:spring-boot-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 }
 

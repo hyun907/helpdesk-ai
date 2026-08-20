@@ -1,0 +1,145 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('policies');
+  return docs.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+
+// 문서 제목은 본문 첫 h1 에서 가져온다. 원문에 frontmatter 를 넣지 않기 위해서다 —
+// 이 파일들은 백엔드가 인제스트하는 원본이므로 프런트 사정으로 고치지 않는다.
+const title = headings.find((h) => h.depth === 1)?.text ?? entry.id;
+
+// 목차는 조항(h2)까지만. 이 문서들은 "1. 복구 신청 기한" 같은 조항 단위로 인용된다.
+const toc = headings.filter((h) => h.depth === 2);
+
+// RAG 답변이 출처로 표기하는 값과 정확히 같은 문자열이다.
+const sourceFile = `${entry.id}.md`;
+---
+
+<BaseLayout title={title}>
+  <article>
+    <p class="eyebrow">
+      운영 정책 · <code>{sourceFile}</code>
+    </p>
+
+    {/* 제목은 원문 h1 을 그대로 쓰되, 목차보다 위에 오도록 여기서 직접 렌더한다.
+        원문 쪽 h1 은 .prose h1 규칙으로 감춘다 — 원본 마크다운은 건드리지 않는다. */}
+    <h1 class="doc-title">{title}</h1>
+
+    {toc.length > 0 && (
+      <nav class="toc" aria-label="목차">
+        <p class="toc-title">조항</p>
+        {/* ul 을 쓴다. 조항 번호는 원문 제목에 이미 들어 있어서
+            ol 의 자동 번호와 겹치면 "1. 1. 제재 종류" 가 된다. */}
+        <ul>
+          {toc.map((h) => (
+            <li><a href={`#${h.slug}`}>{h.text}</a></li>
+          ))}
+        </ul>
+      </nav>
+    )}
+
+    <div class="prose"><Content /></div>
+  </article>
+
+  <a class="back" href="/docs">← 정책 목록</a>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    margin: 0 0 0.5rem;
+    font-size: 0.82rem;
+    color: var(--fg-muted);
+    letter-spacing: 0.01em;
+  }
+  .toc {
+    margin: 1.75rem 0 2.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .toc-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  .doc-title {
+    font-size: 1.9rem; line-height: 1.35; letter-spacing: -0.02em;
+    margin: 0 0 1.5rem; padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc ul { margin: 0; padding: 0; list-style: none; }
+  .toc li { font-size: 0.92rem; margin: 0.15rem 0; }
+  .toc a { color: var(--fg); text-decoration: none; }
+  .toc a:hover { color: var(--accent); text-decoration: underline; }
+
+  .back {
+    display: inline-block; margin-top: 3rem;
+    font-size: 0.9rem; text-decoration: none;
+  }
+  .back:hover { text-decoration: underline; }
+</style>
+
+<style is:global>
+  /* ── 정책 원문 렌더 ─────────────────────────────── */
+  /* 원문 h1 은 위에서 .doc-title 로 이미 렌더했다. 접근성 트리에서도 빠지도록 display:none. */
+  .prose h1 { display: none; }
+  .prose h2 {
+    font-size: 1.25rem; margin: 2.75rem 0 0.9rem;
+    scroll-margin-top: 5.5rem;
+    letter-spacing: -0.01em;
+  }
+  .prose h3 { font-size: 1.05rem; margin: 2rem 0 0.6rem; }
+
+  /* 출처 링크로 특정 조항에 진입하면 그 조항을 눈에 띄게 표시한다.
+     "3회 위반 시 이용 정지 7일" 이라는 답변의 근거가 화면 어디인지 바로 보이게 한다. */
+  .prose h2:target,
+  .prose h3:target {
+    background: var(--mark);
+    box-shadow: -0.6rem 0 0 var(--mark), 0.6rem 0 0 var(--mark);
+    border-radius: 3px;
+  }
+
+  .prose p { margin: 0.9rem 0; }
+  .prose ul, .prose ol { padding-left: 1.35rem; }
+  .prose li { margin: 0.35rem 0; }
+  .prose strong { font-weight: 700; color: var(--fg); }
+
+  /* 표가 이 문서들의 핵심이다 — 제재 수위, 복구 가능 사유가 전부 표로 되어 있다.
+     좁은 화면에서 표만 가로 스크롤되게 하고 페이지 본문은 절대 흔들지 않는다. */
+  .prose table {
+    display: block; overflow-x: auto;
+    width: 100%; max-width: 100%;
+    border-collapse: collapse;
+    margin: 1.25rem 0;
+    font-size: 0.93rem;
+  }
+  /* nowrap 을 두지 않는다. 이 표들은 '비고' 칸에 문장이 들어가서,
+     한 줄로 강제하면 좁은 화면에서 내용이 스크롤 밖으로 완전히 사라진다.
+     줄바꿈시키고, overflow-x 는 그래도 넘칠 때의 안전망으로만 남긴다. */
+  .prose td { min-width: 6em; }
+  .prose thead th {
+    background: var(--bg-inset);
+    font-weight: 700; text-align: left;
+  }
+  .prose th, .prose td {
+    border: 1px solid var(--border);
+    padding: 0.55rem 0.85rem;
+  }
+  .prose tbody tr:nth-child(even) { background: var(--bg-soft); }
+
+  .prose blockquote {
+    margin: 1.25rem 0; padding: 0.5rem 1rem;
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--fg);
+  }
+  .prose hr { border: 0; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+</style>
