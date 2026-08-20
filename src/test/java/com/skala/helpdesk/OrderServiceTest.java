@@ -8,12 +8,13 @@ import com.skala.helpdesk.service.OrderService;
 import com.skala.helpdesk.web.OrderNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
  * 슬라이스 테스트 — JPA 관련 빈만 로드된다(AI 자동구성 제외).
+ * Boot 4.x 에서 @DataJpaTest 패키지가 org.springframework.boot.data.jpa.test.autoconfigure 로 이동했다.
  * Phase 0 의 핵심 검증: 남의 주문은 '없는 것'으로 처리된다.
  */
 @DataJpaTest

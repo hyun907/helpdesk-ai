@@ -14,6 +14,10 @@ spring:
     hibernate:
       ddl-auto: create-drop
 
+  sql:
+    init:
+      platform: h2              # data-h2.sql 을 읽는다
+
   autoconfigure:
     exclude:
       # pgvector·JDBC 메모리 자동구성을 끈다 — 인메모리로 대체된다

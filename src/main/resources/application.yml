@@ -26,6 +26,7 @@ spring:
   sql:
     init:
       mode: always
+      platform: postgresql      # data-postgresql.sql 을 읽는다
 
   ai:
     openai:
