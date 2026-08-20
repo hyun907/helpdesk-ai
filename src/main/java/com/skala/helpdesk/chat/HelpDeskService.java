@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClientResponse;
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -265,15 +265,22 @@ public class HelpDeskService {
     }
 
     /**
-     * QuestionAnswerAdvisor 가 응답 컨텍스트에 넣어 둔 검색 결과에서 출처를 뽑는다.
+     * RAG Advisor 가 응답 컨텍스트에 넣어 둔 검색 결과에서 출처를 뽑는다.
      * 같은 문서에서 여러 청크가 걸려도 이용자에게는 문서 한 줄로 보여야 하므로 중복을 없앤다.
+     *
+     * <p><b>키는 Advisor 구현이 정한다.</b> 예전에는 QuestionAnswerAdvisor 의
+     * {@code qa_retrieved_documents} 를 읽었다. 질의 재작성을 넣으면서 Advisor 를
+     * RetrievalAugmentationAdvisor 로 바꿨고 키도 {@code rag_document_context} 로 바뀌었다.
+     * 상수를 직접 적지 않고 Advisor 의 상수를 참조하는 이유가 여기 있다 — 문자열로 박아 두면
+     * 다음번 교체 때 컴파일은 통과하고 출처만 조용히 빈다. 그건 화면상 '근거 없는 답변'으로 보이고,
+     * 검색이 실패한 것인지 배선이 끊긴 것인지 구분할 방법이 없다.
      */
     private static List<Source> sourcesOf(ChatClientResponse response) {
         Map<String, Object> context = (response == null) ? null : response.context();
         if (context == null) {
             return List.of();
         }
-        Object retrieved = context.get(QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS);
+        Object retrieved = context.get(RetrievalAugmentationAdvisor.DOCUMENT_CONTEXT);
         if (!(retrieved instanceof List<?> documents) || documents.isEmpty()) {
             return List.of();
         }

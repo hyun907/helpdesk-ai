@@ -43,8 +43,19 @@ public final class AdvisorOrder {
     public static final int CHAT_MEMORY = Advisor.DEFAULT_CHAT_MEMORY_PRECEDENCE_ORDER;
 
     /**
-     * 근거 검색 — 메모리 뒤(맥락이 반영된 질문으로 검색), 도구 루프 앞.
+     * 근거 검색 — 메모리 뒤, 도구 루프 앞.
      * 도구 루프 안쪽에 두면 반복마다 다시 검색해 같은 근거를 중복으로 붙인다.
+     *
+     * <p><b>메모리 뒤라는 것이 여기서는 필수 조건이다.</b> 검색을 맡은
+     * RetrievalAugmentationAdvisor 는 프롬프트에 실린 메시지 전체를 대화 이력으로 읽고,
+     * 그것으로 후속 질문을 독립 질의로 다시 쓴 뒤 검색한다(CompressionQueryTransformer).
+     * 메모리 Advisor 보다 <i>앞</i>에 두면 그 시점의 프롬프트에는 앞 대화가 아직 없어서
+     * 재작성기가 압축할 것을 못 찾고, "그럼 그건 몇 번까지 할 수 있나요?" 는 그 문장 그대로
+     * 검색어가 된다 — 예전 QuestionAnswerAdvisor 시절과 똑같이 검색이 통째로 빈다.
+     * 순서를 바꿔도 예외는 나지 않고 출처만 조용히 사라지므로, 증상만 보고는 원인을 못 찾는다.
+     *
+     * <p>즉 <b>순서와 질의 재작성은 둘 다 있어야 하고, 하나만으로는 아무 소용이 없다.</b>
+     * 조립은 {@code AiConfig.ragAdvisor(...)} 에 있다.
      */
     public static final int QUESTION_ANSWER = Integer.MIN_VALUE + 250;
 }

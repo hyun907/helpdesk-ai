@@ -40,7 +40,11 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
     implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
-    implementation 'org.springframework.ai:spring-ai-vector-store-advisor'  // QuestionAnswerAdvisor
+    // 모듈러 RAG — RetrievalAugmentationAdvisor·CompressionQueryTransformer.
+    // 예전에는 spring-ai-vector-store-advisor(QuestionAnswerAdvisor)를 썼다. 그쪽은 이번 턴의
+    // 사용자 문장을 그대로 검색어로 쓰기 때문에 대명사 후속 질문에서 검색이 통째로 비었다.
+    // 검색어를 만드는 단계를 갈아 끼울 수 있는 것은 이 모듈뿐이라 아티팩트를 바꿨다.
+    implementation 'org.springframework.ai:spring-ai-rag'
     implementation 'org.springframework.ai:spring-ai-tika-document-reader'  // PDF·DOCX·MD 읽기
 
     // ── DB ───────────────────────────────────────────────────────
