@@ -121,7 +121,7 @@ Spring Boot 4 · Spring AI 2 기반으로 RAG · Tool Calling · 대화 메모�
 
 | ID | 요구사항 | 목표치 | 검증 방법 | 우선순위 |
 |---|---|---|---|---|
-| **NFR-18** | 응답 품질 기준선 | 평가 세트 10문항 중 8문항 이상 통과 | 자동화된 평가 테스트 | 필수 |
+| **NFR-18** | 응답 품질 기준선 | 평가 세트 17문항 중 허용 실패 2문항 이내 | 자동화된 평가 테스트 | 필수 |
 | **NFR-19** | 검색 품질 | Recall@5 · Precision@5 측정 가능 | 평가 리포트 | 권장 |
 | **NFR-20** | 회귀 방지 | 프롬프트·모델 변경 시 기준선 재측정 | CI 분리 실행 | 권장 |
 
@@ -176,18 +176,24 @@ Spring Boot 4 · Spring AI 2 기반으로 RAG · Tool Calling · 대화 메모�
 ```
 POST /api/chat  {"question":"달빛 대검 잃어버렸는데 복구 되나요?"}
 
- ① ChatController          인증 확인 → 질문·세션ID만 서비스로 전달
- ② AuditAdvisor            감사 기록 시작              (order 0   · 가장 바깥)
- ③ SafeGuardAdvisor        입력 차단 — 민감어·인젝션    (order 100 · 저장보다 앞)
- ④ ChatMemoryAdvisor       같은 세션의 앞 대화 주입      (order 200)
- ⑤ QuestionAnswerAdvisor   정책 문서 검색 → 근거 주입    (order 300)
- ⑥ HelpDeskService         프롬프트 조립 → 모델 호출
- ⑦ CharacterTools          모델이 필요하다 판단하면 호출 → 저장소에서 소유자 검증
- ⑧ TokenMeterAdvisor       토큰·지연 기록 → 지표        (order 10 · 바깥에서 감쌈)
- ⑨ AnswerDto               답변 + 출처 + 도구 사용 여부로 조립해 반환
+ ① ChatController              인증 확인 → 질문·세션ID만 서비스로 전달
+ ② HelpDeskService             ChatCall 조립 → FallbackChatService 로만 모델을 부른다
+ ③ AuditAdvisor                감사 기록 시작              (MIN_VALUE+10  · 가장 바깥)
+ ④ TokenMeterAdvisor           토큰·지연 기록 → 지표        (MIN_VALUE+20  · 바깥에서 감쌈)
+ ⑤ SensitiveInputAdvisor       입력 차단 — 민감어           (MIN_VALUE+100 · 저장보다 앞)
+ ⑥ MessageChatMemoryAdvisor    같은 세션의 앞 대화 주입      (MIN_VALUE+200 · 도구 루프보다 바깥)
+ ⑦ RetrievalAugmentationAdvisor 후속 질문을 독립 질의로 재작성 → 정책 문서 검색 → 근거 주입
+                                                          (MIN_VALUE+250 · 메모리 뒤가 필수)
+ ⑧ CharacterTools·TicketTools  모델이 필요하다 판단하면 호출 → 저장소 쿼리 조건절로 소유자 검증
+                               ToolAuditAspect 가 호출마다 감사 + 호출 상한(8회) 차감
+ ⑨ AnswerDto                   답변 + 출처 + 도구 사용 여부로 조립해 반환
 
- 실패 지점 매핑:
-   401 인증(①) · 차단(③) · 근거 없음(⑤) · 타임아웃(⑥) · 소유자 불일치(⑦)
+ order 는 Advisor.DEFAULT_CHAT_MEMORY_PRECEDENCE_ORDER(MIN_VALUE+200) 대역에 맞춘다.
+ 0~1000 을 쓰면 메모리가 도구 루프 안으로 들어가 tool_calls 메시지가 유실된다 — AdvisorOrder 참고.
+
+ 실패 시:
+   401 인증(①) · 차단(⑤) · 근거 없음(⑦) · 타임아웃(②) · 소유자 불일치(⑧)
+   모델 장애(②)는 재시도 → 보조 모델 → 정형 응답 순으로 내려가며, 어느 경우에도 500 이 나가지 않는다.
 ```
 
 ### 5.3 Advisor 체인 순서
@@ -595,7 +601,7 @@ spring.ai.openai.api-key: ${OPENAI_API_KEY:sk-not-set}
 | `ai.latency` | `phase`(call/stream/first_token/retrieval/tool) | 구간별 지연 |
 | `ai.tool.calls` | `tool`, `result`(ok/fail) | 도구 성공률 |
 
-**평가 세트** — 정답이 정해진 10문항. 문서 범위 밖 질문(아이템 시세, 공략, 다음 업데이트 일정)을 반드시 포함해 지어내기를 검출한다. 기준선(8/10)을 테스트 코드에 고정하고, 모델을 호출하므로 기본 테스트 실행에서는 분리한다(`-Peval`).
+**평가 세트** — 정답이 정해진 17문항. 문서 범위 밖 질문(아이템 시세, 공략)을 반드시 포함해 지어내기를 검출하고, 준비 턴이 붙은 멀티턴 문항 3개로 맥락 유지를, `tool` 채점 문항 2개로 도구 호출/미호출을 함께 본다. 기준선은 통과 개수가 아니라 **허용 실패 2문항**으로 고정한다 — 문항을 늘릴 때마다 숫자를 고쳐야 하면 고치는 것을 잊고 기준선이 조용히 헐거워진다. 평가 계정은 시드 데이터가 있는 `player1` 이다(존재하지 않는 계정으로는 도구 경로를 평가할 수 없다). 모델을 호출하므로 기본 테스트 실행에서는 분리한다(`-Peval`).
 
 실패는 두 종류로 나눠 기록한다.
 - **㉠ 근거를 찾지 못함** → 청킹·임베딩·top-k·질문 변환을 손본다
@@ -672,7 +678,7 @@ spring.ai.openai.api-key: ${OPENAI_API_KEY:sk-not-set}
 | 저장소 쿼리 조건절 (`findByIdAndOwnerId`) | 2 |
 | 도구 목록 부재 (NFR-21) | 1, 3, 9 |
 | 시스템 프롬프트 | 4, 5, 7 |
-| `SafeGuardAdvisor` | 7 |
+| `SensitiveInputAdvisor` | 7 |
 | 루프·길이 상한 | 6, 8 |
 | 대화 ID 규칙 | 10 |
 
@@ -684,7 +690,7 @@ spring.ai.openai.api-key: ${OPENAI_API_KEY:sk-not-set}
 |---|---|---|---|
 | 단위·슬라이스 | 응답 처리 로직, 예외, 변환, **도구 권한 격리**, Advisor 순서 | 없음 | 매 커밋 |
 | 계약 검증 | 형식, 필수 필드, 값 범위 | 소량 | 배포 전 |
-| 평가 세트 | 품질 회귀 통과율 | 10문항 | 프롬프트·모델 변경 시 |
+| 평가 세트 | 품질 회귀 통과율 | 17문항 | 프롬프트·모델 변경 시 |
 
 응답 **내용**을 단정하는 테스트는 만들지 않는다. 형식과 계약을 검증한다.
 
@@ -721,7 +727,7 @@ assertThat(response.sources()).isNotEmpty();
 | 14 | 성능 | P95 5초 이내 | NFR-08 | ✅ |
 | 15 | 폴백 | 주 모델 장애 시에도 응답이 나간다 | NFR-12 | ✅ |
 | 16 | 계층 분리 | 컨트롤러에 `ChatClient` import가 없다 | 원칙 4.1 | ✅ |
-| 17 | 품질 기준선 | 평가 세트 10문항 중 8문항 이상 | NFR-18 | ✅ |
+| 17 | 품질 기준선 | 평가 세트 17문항 중 허용 실패 2문항 이내 | NFR-18 | ✅ |
 
 ---
 
