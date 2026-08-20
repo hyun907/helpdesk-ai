@@ -1,0 +1,70 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.skala'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        // toolchain 으로 고정한다 — 환경 차이로 인한 빌드 실패를 막는다.
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    // 버전은 BOM 한 줄로 맞춘다
+    springAiVersion = '2.0.0'
+}
+
+dependencies {
+    // ── Spring Boot 기본 ─────────────────────────────────────────
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // Boot 4.x 에서 spring-boot-starter-aop → spring-boot-starter-aspectj 로 이름이 바뀌었다
+    implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Swagger UI — Boot 4.x 에는 springdoc 3.x 라인을 쓴다 (2.x 는 Boot 3.x 계열용)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
+
+    // ── Spring AI (Phase 1 부터 사용) ────────────────────────────
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+    implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
+    implementation 'org.springframework.ai:spring-ai-vector-store-advisor'  // QuestionAnswerAdvisor
+    implementation 'org.springframework.ai:spring-ai-tika-document-reader'  // PDF·DOCX·MD 읽기
+
+    // ── DB ───────────────────────────────────────────────────────
+    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'com.h2database:h2'          // local 프로파일용
+
+    // ── 테스트 ───────────────────────────────────────────────────
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // 모델을 호출하는 평가 테스트는 기본 실행에서 제외한다
+    if (!project.hasProperty('eval')) {
+        exclude '**/*EvalTest.class'
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'   // @ToolParam / @RequestParam 이름 보존
+}
