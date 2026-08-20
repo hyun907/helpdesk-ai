@@ -51,6 +51,9 @@ spring:
         repository:
           jdbc:
             initialize-schema: always          # 대화 이력 테이블 자동 생성
+            # 기본 스키마의 conversation_id 는 VARCHAR(36) 이다. 우리 대화 ID 는
+            # {테넌트}:{계정}:{세션} 형식이라 더 길어서 폭을 넓힌 스크립트를 쓴다.
+            schema: classpath:schema/chat-memory-postgresql.sql
 
 # ─────────────────────────────────────────────────────────────
 # 우리 서비스 설정 — 코드에 상수를 남기지 않는다 (코드에 상수를 남기지 않는다)

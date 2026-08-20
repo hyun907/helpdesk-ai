@@ -7,10 +7,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * 그래서 fetch 의 ReadableStream 을 직접 읽고 SSE 프레임을 파싱한다.
  */
 
-// Phase 7 에서 백엔드가 Principal 로 바꾸면 이 값은 사라진다.
-// 지금은 백엔드가 userId 를 쿼리로 받으므로 인증 계정과 같은 값을 보내야 한다.
-const USER_ID = 'player1';
-
 export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
@@ -79,7 +75,9 @@ export default function Chat() {
     ]);
 
     try {
-      const res = await fetch(`/api/chat/stream?userId=${encodeURIComponent(USER_ID)}`, {
+      // 사용자 식별자를 보내지 않는다. 백엔드가 Principal(인증 주체)에서 가져간다 —
+      // 쿼리로 받던 시절에는 남의 계정 ID 를 적어 보내는 것을 막을 방법이 없었다.
+      const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
         body: JSON.stringify({ question, sessionId }),
