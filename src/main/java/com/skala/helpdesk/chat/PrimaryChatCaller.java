@@ -4,12 +4,13 @@ import com.openai.errors.InternalServerException;
 import com.openai.errors.OpenAIIoException;
 import com.openai.errors.RateLimitException;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
+import reactor.core.publisher.Flux;
 
 /**
  * 주 모델 호출 + 재시도.
@@ -56,19 +57,27 @@ public class PrimaryChatCaller {
             },
             maxRetries = MAX_RETRIES,
             delay = DELAY_MILLIS)
-    public String call(String question, String conversationId) {
-        String content = primary.prompt()
-                .user(question)
-                .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, conversationId))
-                .call()
-                .content();
+    public ChatClientResponse call(ChatCall call) {
+        ChatClientResponse response = call.callOn(primary);
 
-        if (!StringUtils.hasText(content)) {
+        if (!StringUtils.hasText(HelpDeskService.textOf(response))) {
             // 예외 없이 빈 응답이 오는 경우가 있다. 빈 문자열을 화면에 그대로 내보내면
             // 사용자는 무엇이 잘못됐는지조차 알 수 없다. 여기서 폴백 경로로 넘긴다.
             throw new EmptyAnswerException("주 모델이 빈 응답을 돌려줬다");
         }
-        return content;
+        return response;
+    }
+
+    /**
+     * 주 모델 스트리밍.
+     *
+     * <p>여기에는 {@code @Retryable} 을 걸지 않는다 — 걸어도 동작하지 않기 때문이다.
+     * 프록시가 잡을 수 있는 것은 이 메서드가 던지는 동기 예외뿐인데, 스트림의 실패는
+     * Flux 를 구독한 뒤에 비동기로 도착한다. 메서드는 이미 정상 반환한 뒤다.
+     * 스트림의 실패 처리는 {@link FallbackChatService#stream(ChatCall)} 에서 연산자로 한다.
+     */
+    public Flux<ChatClientResponse> stream(ChatCall call) {
+        return call.streamOn(primary);
     }
 
     /** 빈 응답을 폴백 경로에 태우기 위한 내부 신호. 재시도 목록에 없으므로 바로 폴백으로 간다. */

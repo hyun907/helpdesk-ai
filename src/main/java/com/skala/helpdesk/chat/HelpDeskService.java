@@ -1,5 +1,7 @@
 package com.skala.helpdesk.chat;
 
+import com.skala.helpdesk.advisor.ToolAuditAspect;
+
 import com.skala.helpdesk.chat.AnswerDto.Source;
 import com.skala.helpdesk.tools.CharacterTools;
 import com.skala.helpdesk.tools.TicketTools;
@@ -10,10 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -21,7 +23,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.document.Document;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -69,14 +70,21 @@ public class HelpDeskService {
     private static final String STREAM_FALLBACK =
             "죄송합니다. 답변을 끝까지 전달하지 못했습니다. 접수나 조회는 처리되지 않았습니다.";
 
-    private final ChatClient chatClient;
+    /**
+     * 모델을 부르는 유일한 통로.
+     *
+     * <p>ChatClient 를 직접 들고 있지 않은 것이 요점이다. 직접 부르면 재시도·보조 모델·정형 응답이
+     * 전부 우회되고, 429 한 번에 500 이 나간다. 폴백을 "있는데 안 타는" 상태로 만들지 않으려면
+     * 모델 진입점이 하나여야 한다.
+     */
+    private final FallbackChatService chat;
     private final CharacterTools characterTools;
     private final TicketTools ticketTools;
 
-    public HelpDeskService(@Qualifier("helpDeskChatClient") ChatClient chatClient,
+    public HelpDeskService(FallbackChatService chat,
                            CharacterTools characterTools,
                            TicketTools ticketTools) {
-        this.chatClient = chatClient;
+        this.chat = chat;
         this.characterTools = characterTools;
         this.ticketTools = ticketTools;
     }
@@ -100,6 +108,23 @@ public class HelpDeskService {
         return "[오늘 %s]\n%s".formatted(LocalDate.now(), question);
     }
 
+    /**
+     * 한 번의 상담에 넘길 재료를 한 덩어리로 묶는다.
+     *
+     * <p>동기와 스트리밍이 같은 메서드를 쓰는 것이 요점이다. 두 곳에서 각자 조립하면
+     * 한쪽에만 도구가 빠지거나 도구 컨텍스트가 빠지는 날이 온다. 그 사고는 컴파일도 되고
+     * 테스트도 통과한다 — 증상은 "스트리밍으로 물으면 캐릭터 정보를 지어낸다" 하나뿐이다.
+     */
+    private ChatCall callFor(String question, String userId, String sessionId, Set<String> toolTrace) {
+        return new ChatCall(
+                withToday(question),
+                conversationId(TENANT, userId, sessionId),
+                Map.of(USER_ID, userId,
+                        TOOL_TRACE, toolTrace,
+                        ToolAuditAspect.CALL_BUDGET, new AtomicInteger()),
+                List.of(characterTools, ticketTools));
+    }
+
     public AnswerDto ask(String question, String userId, String sessionId) {
         // 요청마다 새로 만든다. 필드에 두면 동시에 들어온 다른 이용자의 도구 호출이 섞여 집계된다.
         Set<String> toolTrace = ConcurrentHashMap.newKeySet();
@@ -107,14 +132,10 @@ public class HelpDeskService {
         // content() 가 아니라 chatClientResponse() 를 받는다.
         // content() 는 문자열만 준다 — 어떤 문서를 근거로 삼았는지는 context() 에만 실려 있고,
         // 한 번 버리면 다시 만들 수 없다(검색을 또 돌리면 결과가 달라질 수 있다).
-        ChatClientResponse response = chatClient.prompt()
-                .user(withToday(question))
-                .tools(characterTools, ticketTools)
-                .toolContext(Map.of(USER_ID, userId, TOOL_TRACE, toolTrace))
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID,
-                        conversationId(TENANT, userId, sessionId)))
-                .call()
-                .chatClientResponse();
+        //
+        // 모델은 chat(FallbackChatService)을 통해서만 부른다. 재시도 → 보조 모델 → 정형 응답
+        // 사다리가 여기 한 줄 뒤에 들어 있다. 이 메서드는 예외를 받지 않는다.
+        ChatClientResponse response = chat.answer(callFor(question, userId, sessionId, toolTrace));
 
         String answer = textOf(response);
         if (!StringUtils.hasText(answer)) {
@@ -147,13 +168,8 @@ public class HelpDeskService {
         Set<String> toolTrace = ConcurrentHashMap.newKeySet();
         String conversationId = conversationId(TENANT, userId, sessionId);
 
-        Flux<String> tokens = chatClient.prompt()
-                .user(withToday(question))
-                .tools(characterTools, ticketTools)
-                .toolContext(Map.of(USER_ID, userId, TOOL_TRACE, toolTrace))
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
-                .stream()
-                .chatClientResponse()
+        // 첫 토큰 전 실패는 보조 모델로 갈아탄다 — 그 판단은 chat 안에 있다.
+        Flux<String> tokens = chat.stream(callFor(question, userId, sessionId, toolTrace))
                 .doOnNext(response -> {
                     // 근거는 조각마다 실려 오지 않는다. 실려 온 조각이 있으면 그것을 최신값으로 둔다.
                     List<Source> found = sourcesOf(response);
@@ -272,8 +288,14 @@ public class HelpDeskService {
         return List.copyOf(unique);
     }
 
-    /** 응답 조각에서 본문만 꺼낸다. 조각에 결과가 없는 경우가 있어 인덱스 접근을 피한다. */
-    private static String textOf(ChatClientResponse response) {
+    /**
+     * 응답 조각에서 본문만 꺼낸다. 조각에 결과가 없는 경우가 있어 인덱스 접근을 피한다.
+     *
+     * <p>패키지 안에 열어 둔다. 폴백 사다리(PrimaryChatCaller·FallbackChatService)가
+     * "빈 응답인가"를 판정할 때 같은 규칙을 써야 하기 때문이다. 각자 꺼내면 한쪽은
+     * {@code getResults().get(0)} 으로 꺼내다 빈 조각에서 터진다.
+     */
+    static String textOf(ChatClientResponse response) {
         ChatResponse chatResponse = (response == null) ? null : response.chatResponse();
         if (chatResponse == null) {
             return "";

@@ -85,19 +85,48 @@ public class AiConfig {
     /**
      * 보조 모델 — 주 모델 장애 시에만 쓰인다.
      *
-     * <p>여기에는 Advisor 를 걸지 않는다. 폴백은 이미 실패한 경로의 마지막 시도이므로
-     * 검색·메모리까지 다시 태우면 실패 지점만 늘어난다. 대화 이력은 호출부가
-     * conversationId 파라미터로 이어 붙인다.
-     *
      * <p>중요한 것은 어떤 모델이냐가 아니라 <b>주 모델과 다른 모델</b>이라는 점이다.
      * 같은 모델로 폴백하면 주 모델을 죽인 원인이 폴백도 그대로 죽인다.
+     *
+     * <p><b>Advisor 를 왜 거의 그대로 다시 거는가.</b> 예전에는 "폴백은 마지막 시도이므로
+     * 실패 지점을 늘리지 말자"는 이유로 아무것도 걸지 않았다. 그 상태로 폴백을 실제 상담 경로에
+     * 배선했다면 다음이 벌어진다.
+     * <ul>
+     *   <li>시스템 프롬프트가 없다 — 범위 제한도, 권한 규칙도, "지시문은 데이터다"도 없는 맨 모델이
+     *       고객에게 답한다. 장애 상황이 곧 안전장치 해제가 된다.</li>
+     *   <li>근거 검색이 없다 — 규정 질문에 근거 없이 답한다. 폴백이 오답 생성기가 된다.</li>
+     * </ul>
+     * 실패 지점이 하나 느는 것보다 이쪽이 훨씬 나쁘다. 그래서 <b>모델만 다른 같은 조립</b>으로 간다.
+     *
+     * <p>딱 하나 빼는 것이 메모리 Advisor 다. 주 모델 경로의 메모리 Advisor 는 모델을 부르기 전에
+     * 사용자 메시지를 이미 저장했으므로, 여기서 또 걸면 같은 질문이 이력에 두 번 쌓인다.
+     * 빠진 조각(답변)만 {@code FallbackChatService} 가 직접 채운다.
      */
     @Bean
-    ChatClient fallbackChatClient(ChatClient.Builder builder, HelpDeskProperties props) {
+    ChatClient fallbackChatClient(ChatClient.Builder builder,
+                                  VectorStore vectorStore,
+                                  HelpDeskProperties props,
+                                  AuditAdvisor audit,
+                                  TokenMeterAdvisor meter,
+                                  SensitiveInputAdvisor sensitiveInput,
+                                  @Value("classpath:/prompts/system.st") Resource systemPrompt) {
         return builder.clone()
                 // 2.0 에서 defaultOptions 는 ChatOptions 가 아니라 그 Builder 를 받는다
                 .defaultOptions(ChatOptions.builder()
                         .model(props.fallback().model()))
+                .defaultSystem(systemPrompt)
+                .defaultAdvisors(
+                        audit,
+                        meter,
+                        sensitiveInput,
+                        // 메모리(200)는 빼고 근거 검색만 남긴다 — 위 주석 참고
+                        QuestionAnswerAdvisor.builder(vectorStore)
+                                .searchRequest(SearchRequest.builder()
+                                        .topK(props.rag().topK())
+                                        .similarityThreshold(props.rag().threshold())
+                                        .build())
+                                .order(QUESTION_ANSWER_ORDER)
+                                .build())
                 .build();
     }
 
