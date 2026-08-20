@@ -1,0 +1,22 @@
+# pgvector 확장이 켜진 PostgreSQL
+# 사용법:  docker compose up -d   (띄우기)
+#          docker compose ps      (상태 확인)
+#          docker compose down    (내리기, -v 를 붙이면 데이터도 삭제)
+services:
+  pgvector:
+    image: pgvector/pgvector:pg17
+    container_name: helpdesk-pgvector
+    environment:
+      POSTGRES_DB: springai
+      POSTGRES_USER: springai
+      POSTGRES_PASSWORD: springai
+    ports: ["5434:5432"]   # 로컬 PostgreSQL(5432)·타 컨테이너(5433)와 충돌 회피
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U springai -d springai"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
