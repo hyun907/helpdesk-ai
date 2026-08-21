@@ -154,6 +154,12 @@
   --radius: 0;            /* 둥근 모서리를 전부 무력화한다 */
   --maxw: 880px;
 
+  /* 들판에 놓는 오브젝트. 판(.px) 바깥 여백에만 놓는다 — 판은 불투명해서
+     화면이 좁아 겹치면 자연히 가려지지만, 반쯤 잘려 보이는 게 지저분해서
+     여백이 좁아지면 아래 미디어쿼리로 아예 끈다. */
+  --scenery-l: url('/scenery/left-day.svg');
+  --scenery-r: url('/scenery/right-day.svg');
+
   /* 잔디 무늬 타일 (라이트).
      128px 타일이고 무늬는 바탕과 색차 ΔE 4~18 안에 든다.
      분홍과 초록은 보색이라 '알아볼 수 있는 분홍'은 절대 은은해지지 않는다
@@ -215,6 +221,8 @@
     --tint: #9db3d2;
     --shade: #10151d;
 
+    --scenery-l: url('/scenery/left-night.svg');
+    --scenery-r: url('/scenery/right-night.svg');
     --grass-tile: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27128%27%20height%3D%27128%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20x%3D%2718%27%20y%3D%2734%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23374457%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2730%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%2722%27%20y%3D%2730%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%2716%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2788%27%20y%3D%2720%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2796%27%20y%3D%2720%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%2724%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%2720%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%233b3e45%27%2F%3E%3Crect%20x%3D%2760%27%20y%3D%2796%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23374457%27%2F%3E%3Crect%20x%3D%2756%27%20y%3D%2792%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%2764%27%20y%3D%2792%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%27116%27%20y%3D%27104%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%276%27%20y%3D%2788%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%2740%27%20y%3D%2760%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3C%2Fsvg%3E");
 
     color-scheme: dark;
@@ -518,8 +526,12 @@ body {
      픽셀 라벨에서 강조가 필요하면 굵기 대신 색이나 채움을 쓴다. */
   font-synthesis: none;
   background-color: var(--grass);
-  background-image: var(--grass-tile);
-  background-repeat: repeat;
+  /* 세 겹이다. 좌우 여백의 오브젝트 두 겹 + 잔디 무늬.
+     오브젝트는 세로로만 반복해 페이지가 길어져도 들판이 이어진다. */
+  background-image: var(--scenery-l), var(--scenery-r), var(--grass-tile);
+  background-position: left top, right top, left top;
+  background-size: 170px 1400px, 170px 1400px, auto;
+  background-repeat: repeat-y, repeat-y, repeat;
   /* 도트를 확대할 일이 있어도 흐려지지 않게 */
   image-rendering: pixelated;
   font-family: var(--font-body);
@@ -702,4 +714,15 @@ h1 {
   font-weight: 700;
   background: var(--mark);
   box-shadow: 0 0 0 3px var(--mark);
+}
+
+/* ── 들판 오브젝트를 끄는 지점 ──
+   본문 판 920px + 좌우 오브젝트 띠 170px 씩 = 1260px 이 필요하다.
+   그보다 좁으면 오브젝트가 판 뒤로 밀려 반쪽만 삐져나온다 — 아예 끈다.
+   이 규칙은 낮/밤 두 블록보다 뒤에 있어야 둘 다 덮는다. */
+@media (max-width: 1299px) {
+  :root {
+    --scenery-l: none;
+    --scenery-r: none;
+  }
 }
