@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,8 @@ import org.springframework.stereotype.Service;
  * 문서 인제스트 — 읽기 → 분할 → 메타데이터 보강 → 저장.
  *
  * 이 단계에서 두 가지를 반드시 지킨다.
- *   1. 재색인: 같은 출처를 지우고 다시 넣는다. 안 하면 같은 청크가 쌓인다.
+ *   1. 재색인: 같은 출처의 이전 세대를 걷어낸다. 안 하면 같은 청크가 쌓인다.
+ *      단 <b>넣은 뒤에</b> 지운다 — 순서가 왜 정해져 있는지는 {@link #ingest} 주석에 있다.
  *   2. 메타데이터: 인제스트 시점에만 넣을 수 있다. 빠뜨리면 전량 재색인해야 한다.
  *
  * 둘 다 오류를 내지 않는다. 검색 품질만 조용히 나빠지므로 원인 추적이 가장 어렵다.
@@ -48,23 +51,49 @@ public class IngestService {
     /** 이보다 짧은 조항은 앞 조항에 붙인다. 한두 문장짜리 조각은 검색에 걸려도 답이 안 된다. */
     private static final int MIN_SECTION_CHARS = 120;
 
+    /** 세대 구분 메타데이터 키. 교체 조건이 이 키 하나에 걸려 있다. */
+    static final String INGEST_ID = "ingestId";
+
     private final VectorStore vectorStore;
 
     public IngestService(VectorStore vectorStore) {
         this.vectorStore = vectorStore;
     }
 
+    /**
+     * 문서 하나를 색인한다. <b>넣고 나서 지운다 — 순서가 뒤집히면 안 된다.</b>
+     *
+     * <p>예전에는 지우고 넣었다. 그 순서에는 되돌릴 수 없는 실패 구간이 있다.
+     * 삭제는 벡터 스토어 안에서 끝나지만 저장은 임베딩 API 를 부른다. 그래서
+     * 401·429·네트워크 끊김이 나면 <b>지우기만 하고 끝난다.</b> 문서가 색인에서
+     * 통째로 사라진 채로 남고, 예외는 인제스트 시점에 한 번 나고 만다.
+     *
+     * <p>증상은 그 문서에 대한 규정 답변이 전부 "확인되지 않습니다"가 되는 것이다.
+     * 검색은 정상 동작하고 오류도 안 나므로, 인제스트 로그를 되짚기 전까지는
+     * 프롬프트나 임계값을 의심하며 시간을 쓰게 된다. 실제로 두 번 겪었다.
+     *
+     * <p>그래서 <b>세대 교체</b>로 바꾼다. 새 청크에 이번 실행의 ingestId 를 붙여 먼저 넣고,
+     * 성공한 뒤에 같은 source 의 <i>다른</i> ingestId 를 지운다. 저장이 실패하면 지우는 단계에
+     * 닿지 못하므로 이전 세대가 그대로 남는다 — 색인이 비는 일이 없다.
+     *
+     * <p>대가는 두 가지다.
+     * <ul>
+     *   <li>저장과 삭제 사이의 짧은 구간에는 두 세대가 함께 검색된다. 같은 문장이 중복으로
+     *       걸릴 수 있지만 잠깐이고, 빈 색인보다 낫다.</li>
+     *   <li>저장이 중간까지만 성공하면 부분 세대가 남는다. 다음 인제스트가 성공하는 순간
+     *       "현재 세대가 아닌 것"을 모두 지우므로 스스로 정리된다.</li>
+     * </ul>
+     */
     public IngestResult ingest(Resource file, String docType, String dept) {
         String source = file.getFilename();
         String version = LocalDate.now().toString();
+        // 실행마다 다른 값이어야 한다. version(날짜)으로는 같은 날 두 번 색인할 때 세대가 겹친다.
+        String ingestId = UUID.randomUUID().toString();
 
-        // ① 재색인 — 같은 출처를 먼저 지운다
-        vectorStore.delete(new FilterExpressionBuilder().eq("source", source).build());
-
-        // ② 분할 — 규정 문서는 조항(##)이 검색 단위다
+        // ① 분할 — 규정 문서는 조항(##)이 검색 단위다
         List<Chunk> chunks = isMarkdown(source) ? splitBySection(file) : splitByLength(file);
 
-        // ③ 메타데이터 보강 — 출처 표기·필터·조항 앵커가 전부 여기서 나온다
+        // ② 메타데이터 보강 — 출처 표기·필터·조항 앵커가 전부 여기서 나온다
         List<Document> enriched = chunks.stream().map(chunk -> {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("source", source);        // 출처 표기용
@@ -72,15 +101,46 @@ public class IngestService {
             metadata.put("dept", dept);            // 권한·범위 제한용
             metadata.put("version", version);      // 최신본 판별용
             metadata.put("heading", chunk.heading());   // 조항 앵커용 — 지금 안 넣으면 전량 재색인이다
+            metadata.put(INGEST_ID, ingestId);     // 세대 구분용 — 교체의 기준점이다
             return new Document(chunk.text(), metadata);
         }).toList();
 
-        // ④ 저장 — 임베딩 호출은 VectorStore 가 알아서 한다
+        // ③ 저장 — 임베딩 호출은 VectorStore 가 알아서 한다. 여기서 터지면 ④ 에 닿지 않는다.
         vectorStore.add(enriched);
 
-        log.info("인제스트 완료 source={} docType={} dept={} chunks={}",
-                source, docType, dept, enriched.size());
+        // ④ 이전 세대 정리 — 같은 출처인데 이번 실행이 아닌 것. 저장이 성공한 뒤에만 실행된다.
+        vectorStore.delete(previousGenerations(source, ingestId));
+
+        log.info("인제스트 완료 source={} docType={} dept={} chunks={} ingestId={}",
+                source, docType, dept, enriched.size(), ingestId);
         return new IngestResult(source, docType, dept, enriched.size());
+    }
+
+    /**
+     * "같은 출처이면서 이번 실행이 아닌" 청크를 고르는 조건.
+     *
+     * <p>{@code source} 조건을 빠뜨리면 다른 문서까지 지운다. {@code ingestId} 조건을
+     * 빠뜨리면 방금 넣은 것을 도로 지운다. 둘 다 조용히 잘못되는 종류라 한 곳에 모아 둔다.
+     *
+     * <p><b>전제 — 모든 청크에 ingestId 가 있어야 한다.</b> 이 필터는 결국
+     * {@code metadata->>'ingestId' <> '새값'} 이 되는데, 키가 없는 행은 좌변이 NULL 이고
+     * NULL 비교의 결과는 TRUE 가 아니라 NULL 이다. SQL 의 3값 논리라 WHERE 절이 그 행을
+     * 걸러내지 못한다 — 즉 <b>ingestId 없는 청크는 영원히 안 지워진다.</b>
+     *
+     * <p>실제로 겪었다. 세대 교체로 바꾸기 <i>전에</i> 색인된 17청크가 ingestId 없이 남아
+     * 새로 넣은 17청크와 함께 34청크가 됐고, 검색마다 같은 문장이 두 번 걸렸다. 오류는 없고
+     * 재색인을 아무리 돌려도 줄지 않는다.
+     *
+     * <p>{@code isNull} 절을 OR 로 붙여 해결하려 했으나 쓸 수 없다 — 우변 없는 연산자를
+     * 필터 변환기가 거부한다({@code IllegalStateException: expression should have a right
+     * operand}). 그래서 조건을 단순하게 두는 대신 <b>전제를 코드로 지킨다</b>:
+     * 벡터 스토어에 쓰는 곳은 {@link #ingest} 하나뿐이고, 거기서 모든 청크에 ingestId 를 붙인다.
+     * 다른 경로로 문서를 넣는 코드가 생기면 이 전제가 깨지고 위 증상이 되살아난다.
+     * 그때는 스토어를 비우고 전량 재색인해야 한다.
+     */
+    private static Filter.Expression previousGenerations(String source, String ingestId) {
+        FilterExpressionBuilder b = new FilterExpressionBuilder();
+        return b.and(b.eq("source", source), b.ne(INGEST_ID, ingestId)).build();
     }
 
     private boolean isMarkdown(String source) {
