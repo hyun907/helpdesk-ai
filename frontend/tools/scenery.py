@@ -42,9 +42,9 @@ SPRITES['tree'] = [
     "XaaaaaaabbbcX",
     "XaaaaaabbbbcX",
     ".XaaaabbbbcX.",
-    ".XbbbbbbbbcX.",
-    "..XXbbbbbXX..",
-    "....XbbbX....",
+    "..XbbbbbbbX..",
+    "...XbbbbbX...",
+    "....YwvvY....",
     "....YwvvY....",
     "....YwvvY....",
     "....YwvvY....",
@@ -53,17 +53,18 @@ SPRITES['tree'] = [
 ]
 
 SPRITES['tree2'] = [
-    "...XXXXX...",
-    ".XXaaaabXX.",
-    "XaaaaaabbbX",
-    "XaaaaaabbbX",
-    ".XaaaabbbX.",
-    "..XaabbbX..",
-    "...XbbbX...",
-    "...YwvvY...",
-    "...YwvvY...",
-    "..YwvvvvY..",
-    "..YYYYYYY..",
+    "...XXX...",
+    ".XXaaaXX.",
+    "XaaaaabbX",
+    "XaaaaabbX",
+    "XaaaabbbX",
+    ".XaabbbX.",
+    "..XbbbX..",
+    "..YwvvY..",
+    "..YwvvY..",
+    "..YwvvY..",
+    ".YwvvvvY.",
+    ".YYYYYYY.",
 ]
 
 SPRITES['bush'] = [
