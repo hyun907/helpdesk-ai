@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
-import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,6 +16,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 /**
  * 인증·인가의 단일 지점.
@@ -78,7 +79,14 @@ public class SecurityConfig {
                 // 실습 범위에서는 HTTP Basic 으로 충분하다.
                 // 폼 로그인을 켜지 않는 이유: 인증 실패에 302 리다이렉트가 아니라 401 이 나와야 API 클라이언트가 알아듣는다.
                 // 다만 Basic 은 자격증명을 매 요청 평문에 가깝게 싣는다 — HTTPS 없이 운영에 올리면 안 된다.
-                .httpBasic(Customizer.withDefaults());
+                //
+                // 인증 실패에 WWW-Authenticate 를 보내지 않는다.
+                // 기본 동작은 401 에 `WWW-Authenticate: Basic` 을 실어 브라우저에게 "자격증명을 물어보라"고 시키는 것인데,
+                // 그러면 우리 로그인 화면 대신 크롬 기본 로그인 팝업이 뜬다. 그 팝업은 페이지 스크립트를 통째로 멈춰 세우고,
+                // 거기서 취소를 누르면 화면은 아무 설명 없이 빈 채로 남는다.
+                // 상태 코드는 401 그대로다 — 클라이언트가 "인증 필요"를 판단하는 근거는 그대로 두고, 브라우저 개입만 뺀다.
+                .httpBasic(basic -> basic.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
 
         return http.build();
     }
