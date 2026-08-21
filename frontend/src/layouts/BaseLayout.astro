@@ -1,5 +1,6 @@
 ---
 import '../styles/pixel.css';
+import SessionBadge from '../components/SessionBadge.jsx';
 
 interface Props {
   title: string;
@@ -15,8 +16,8 @@ const path = Astro.url.pathname;
 const nav = [
   { href: '/', label: '상담', icon: '♡', match: (p: string) => p === '/' },
   { href: '/docs', label: '운영 정책', icon: '▤', match: (p: string) => p.startsWith('/docs') },
-  { href: '/admin', label: '검색 점검', icon: '◈', match: (p: string) => p === '/admin' },
-  { href: '/admin/tickets', label: '승인 대기', icon: '★', match: (p: string) => p.startsWith('/admin/tickets') },
+  { href: '/admin', label: '검색 점검', icon: '◈', adminOnly: true, match: (p: string) => p === '/admin' },
+  { href: '/admin/tickets', label: '승인 대기', icon: '★', adminOnly: true, match: (p: string) => p.startsWith('/admin/tickets') },
 ];
 ---
 
@@ -40,11 +41,13 @@ const nav = [
       <a class="brand" href="/">HelpDesk<span>AI</span></a>
       <nav aria-label="주요 메뉴">
         {nav.map((item) => (
-          <a href={item.href} class:list={['px', { active: item.match(path) }]}>
+          <a href={item.href} data-admin-only={item.adminOnly ? '' : undefined}
+             class:list={['px', { active: item.match(path) }]}>
             <span class="nav-icon" aria-hidden="true">{item.icon}</span>{item.label}
           </a>
         ))}
       </nav>
+      <SessionBadge client:load />
     </header>
 
     <main>
@@ -62,6 +65,80 @@ const nav = [
 </html>
 
 <style is:global>
+  /* ── 로그인 배지 ─────────────────────────────────
+     헤더 오른쪽 끝. 지금 누구인지가 항상 보여야 한다 —
+     계정에 따라 메뉴와 데이터가 달라지는 화면이라 "왜 안 보이지"의 답이 여기 있다. */
+  .site-header { flex-wrap: wrap; }
+  .session-badge {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 30px;
+    color: var(--ink-grass);
+  }
+  .session-badge.anon { opacity: 0.75; }
+  .session-badge .who { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--ink-grass); }
+  /* GM 표식 — 채움 배지 하나. 아이콘을 더 늘리지 않는다. */
+  .session-badge .role {
+    padding: 0 0.4em;
+    background: var(--rose); color: var(--on-fill);
+    box-shadow: 0 0 0 var(--u) var(--wood-2);
+  }
+  .session-badge button {
+    font: inherit; color: var(--ink-grass);
+    background: none; border: 0; padding: 0;
+    text-decoration: underline; text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .session-badge button:hover { color: var(--rose-deep); }
+  .session-badge button:focus-visible { outline: 3px solid var(--rose-deep); outline-offset: 2px; }
+
+  /* 관리 메뉴는 GM 에게만 보인다.
+     역할을 모르는 동안(정적 HTML 이 뜬 직후)에도 감춰 둔다 — 잠깐 보였다 사라지면
+     권한 없는 사용자에게 "있었는데 뺏긴" 것처럼 보인다.
+     이건 화면 정리이지 차단이 아니다. 차단은 서버가 한다. */
+  .site-header nav a[data-admin-only] { display: none; }
+  body[data-role='admin'] .site-header nav a[data-admin-only] { display: inline-flex; }
+
+  /* ── 로그인 · 권한 안내 판 ───────────────────────── */
+  .auth-panel {
+    --px-bg: var(--cream-2);
+    display: flex; flex-direction: column; gap: 0.75rem;
+    max-width: 22rem; margin: 1rem auto; padding: 1.5rem;
+  }
+  .auth-panel h2 {
+    margin: 0;
+    font-family: var(--font-display); font-size: 24px; line-height: 36px;
+    color: var(--ink);
+  }
+  .auth-panel p { margin: 0; font-size: 0.95rem; color: var(--ink-soft); }
+  .auth-panel label {
+    display: flex; flex-direction: column; gap: 0.3rem;
+    font-family: var(--font-pixel); font-size: 15px; line-height: 30px;
+    color: var(--ink-soft);
+  }
+  .auth-panel input {
+    padding: 0.6rem 0.85rem;
+    font: inherit; font-size: 0.95rem; font-family: inherit;
+    color: var(--ink); background: var(--cream);
+    border: 3px solid var(--wood-2); border-radius: 0;
+    -webkit-appearance: none; appearance: none;
+  }
+  .auth-panel input:focus-visible {
+    outline: 3px solid var(--rose-deep); outline-offset: 2px;
+    border-color: var(--wood);
+  }
+  .auth-panel button[type='submit'] {
+    --px-bg: var(--rose);
+    padding: 0.55rem 1rem;
+    font-family: var(--font-pixel); font-size: 15px; line-height: 30px;
+    color: var(--on-fill); background: none; border: 0;
+    cursor: pointer;
+  }
+  .auth-panel button[type='submit']:disabled { opacity: 0.55; cursor: default; }
+  .auth-panel .hint { font-size: 0.82rem; color: var(--ink-soft); }
+  .auth-panel .notice.bad { color: var(--rose-deep); font-size: 0.9rem; }
+
   /* 메뉴 아이콘 — 글자보다 한 톤 옅게 둬서 라벨을 가리지 않는다 */
   .site-header nav a .nav-icon {
     margin-right: 0.4em;

@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Chat from '../components/Chat.jsx';
+import ChatPage from '../components/ChatPage.jsx';
 ---
 
 <BaseLayout
@@ -13,7 +13,9 @@ import Chat from '../components/Chat.jsx';
     규정을 인용한 답변에는 <strong>근거 문서</strong>가 함께 붙습니다.
   </p>
 
-  <Chat client:load />
+  {/* 로그인 게이트는 ChatPage 안(React)에서 씌운다 — .astro 에서 감싸면
+      안쪽이 정적 HTML 로 들어와 하이드레이션되지 않는다. */}
+  <ChatPage client:load />
 </BaseLayout>
 
 <style is:global>

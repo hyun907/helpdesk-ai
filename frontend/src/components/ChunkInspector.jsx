@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiFetch } from '../lib/auth.js';
 
 /**
  * 검색 점검 창구.
@@ -20,7 +21,7 @@ export default function ChunkInspector() {
 
     setState({ status: 'loading' });
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/admin/chunks?q=${encodeURIComponent(query)}&topK=${topK}`,
       );
       if (!res.ok) {
@@ -43,7 +44,7 @@ export default function ChunkInspector() {
     }
     setIngest({ status: 'running' });
     try {
-      const res = await fetch('/api/admin/ingest', { method: 'POST' });
+      const res = await apiFetch('/api/admin/ingest', { method: 'POST' });
       if (!res.ok) {
         setIngest({ status: 'error', error: describe(res.status) });
         return;
@@ -203,7 +204,7 @@ const BACKEND_DOWN =
 
 function describe(status) {
   if (status === 401 || status === 403) {
-    return '관리자 인증이 필요합니다 — ADMIN_BASIC 환경변수를 넣고 dev 서버를 다시 띄우세요.';
+    return '관리자 권한이 필요합니다. 담당자(GM) 계정으로 로그인해 주세요.';
   }
   // 개발 중에는 프록시가 업스트림 연결 실패를 502 로 바꿔 준다.
   // fetch 가 예외를 던지지 않으므로 여기서 잡아야 원인을 제대로 말할 수 있다.

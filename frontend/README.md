@@ -31,22 +31,27 @@ Docker 없이 띄우는 방법(`SPRING_PROFILES_ACTIVE=local`)도 루트 README 
 ### 인증
 
 백엔드가 `/api/chat/**` 은 인증을, `/api/admin/**` 은 `ROLE_ADMIN` 을 요구합니다.
-개발 중에는 Vite 프록시가 환경변수를 읽어 Basic 자격증명을 붙입니다.
+화면에서 직접 로그인합니다 — 개발·운영이 같은 경로를 씁니다.
 
-```bash
-ADMIN_BASIC='<gm계정>:<비밀번호>' USER_BASIC='<player계정>:<비밀번호>' npm run dev
-```
+자격증명은 `sessionStorage` 에 두고 요청마다 `Authorization: Basic` 으로 실어 보냅니다
+(백엔드가 STATELESS 라 서버에 로그인 상태가 없습니다). 탭을 닫으면 사라집니다.
 
-| 환경변수 | 붙는 경로 | 없을 때 |
+| 화면 | 필요한 역할 | 권한이 모자랄 때 |
 |---|---|---|
-| `USER_BASIC` | `/api/chat/**` | 상담 화면에 "로그인이 필요합니다" |
-| `ADMIN_BASIC` | `/api/admin/**` | 검색 점검·승인 대기에 "관리자 인증 필요" |
-| `API_TARGET` | 프록시 대상 | 기본 `http://localhost:8081` |
+| 상담 (`/`) | 로그인한 사용자 | 로그인 폼 |
+| 검색 점검 (`/admin`) | `ROLE_ADMIN` | "권한이 없습니다" |
+| 승인 대기 (`/admin/tickets`) | `ROLE_ADMIN` | "권한이 없습니다" |
+| 운영 정책 (`/docs`) | 없음 | — |
+
+관리 메뉴는 GM 으로 로그인해야 헤더에 나타납니다. 이건 화면 정리이지 차단이 아닙니다 —
+게이트를 걷어내도 `/api/admin/**` 은 서버가 403 으로 막습니다.
 
 계정 값은 백엔드 `SecurityConfig.userDetailsService()` 에 있습니다.
 **여기에 옮겨 적지 않습니다** — 같은 비밀번호가 여러 파일에 흩어지면 바꿀 때 빠뜨립니다.
 
-이 주입은 **dev 서버에서만** 동작합니다. 빌드 산출물에는 들어가지 않습니다.
+| 환경변수 | 쓰임 | 기본값 |
+|---|---|---|
+| `API_TARGET` | 프록시 대상 | `http://localhost:8081` |
 
 ### 빌드
 

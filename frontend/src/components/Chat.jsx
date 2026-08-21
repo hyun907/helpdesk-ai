@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { apiFetch } from '../lib/auth.js';
 
 /**
  * 상담 화면.
@@ -93,7 +94,7 @@ export default function Chat() {
     try {
       // 사용자 식별자를 보내지 않는다. 백엔드가 Principal(인증 주체)에서 가져간다 —
       // 쿼리로 받던 시절에는 남의 계정 ID 를 적어 보내는 것을 막을 방법이 없었다.
-      const res = await fetch('/api/chat/stream', {
+      const res = await apiFetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
         body: JSON.stringify({ question, sessionId: session }),
@@ -284,7 +285,7 @@ const BACKEND_DOWN =
 
 function describe(status) {
   if (status === 401 || status === 403) {
-    return '로그인이 필요합니다 — USER_BASIC 환경변수를 넣고 dev 서버를 다시 띄우세요.';
+    return '로그인이 필요합니다. 세션이 만료되었다면 다시 로그인해 주세요.';
   }
   if (status === 502 || status === 503 || status === 504) return BACKEND_DOWN;
   if (status === 400) return '요청이 거부되었습니다. 질문이 비어 있거나 2000자를 넘었는지 확인하세요.';

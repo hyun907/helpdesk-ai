@@ -24,18 +24,6 @@ export default defineConfig({
           target: process.env.API_TARGET ?? 'http://localhost:8081',
           changeOrigin: true,
 
-          /**
-           * 개발 전용 인증 주입.
-           *
-           * 백엔드가 /api/admin/** 에 ROLE_ADMIN 을 걸어 두었다. 브라우저에서 그냥 부르면
-           * 401 + WWW-Authenticate 로 크롬 기본 로그인 팝업이 뜬다 — 화면이 멈춘다.
-           *
-           * 자격증명은 환경변수에서만 읽는다. 소스에 넣지 않는다:
-           *   ADMIN_BASIC='<계정>:<비밀번호>' npm run dev
-           *
-           * 이 코드는 dev 서버에서만 돈다. 빌드 산출물에는 포함되지 않는다.
-           * 운영에서는 사용자가 직접 로그인해야 하며, 그 흐름은 별도로 만든다.
-           */
           configure(proxy) {
             /**
              * 업스트림(Spring)이 안 떠 있을 때 Vite 기본 동작은 500 이다.
@@ -49,30 +37,6 @@ export default defineConfig({
               }
             });
 
-            /**
-             * 경로별로 다른 계정을 붙인다. 관리 창구와 상담 창구는 권한이 다르다:
-             *   ADMIN_BASIC → /api/admin/**  (ROLE_ADMIN 계정)
-             *   USER_BASIC  → /api/chat/**   (일반 사용자 계정)
-             *
-             * 값은 백엔드 SecurityConfig 의 실습 계정을 쓴다. 여기에 적지 않는다.
-             *
-             * 둘 다 환경변수에서만 읽는다. 저장소에 비밀번호를 넣지 않는다.
-             * 이 코드는 dev 서버에서만 돈다 — 빌드 산출물에는 들어가지 않는다.
-             */
-            const accounts = [
-              ['/api/admin', process.env.ADMIN_BASIC],
-              ['/api/chat', process.env.USER_BASIC],
-            ]
-              .filter(([, cred]) => cred)
-              .map(([prefix, cred]) => [prefix, Buffer.from(cred).toString('base64')]);
-
-            if (accounts.length === 0) return;
-
-            proxy.on('proxyReq', (proxyReq, req) => {
-              if (proxyReq.getHeader('authorization')) return;
-              const hit = accounts.find(([prefix]) => req.url?.startsWith(prefix));
-              if (hit) proxyReq.setHeader('authorization', `Basic ${hit[1]}`);
-            });
           },
         },
       },

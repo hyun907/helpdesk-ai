@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ChunkInspector from '../components/ChunkInspector.jsx';
+import InspectorPage from '../components/InspectorPage.jsx';
 ---
 
 <BaseLayout
@@ -15,7 +15,7 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
 
   {/* client:load — 이 페이지에서 유일하게 자바스크립트가 실리는 지점이다.
       나머지(헤더·문서 페이지)는 전부 정적 HTML 로 나간다. */}
-  <ChunkInspector client:load />
+  <InspectorPage client:load />
 </BaseLayout>
 
 <style is:global>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { apiFetch } from '../lib/auth.js';
 
 /**
  * 승인 대기 큐.
@@ -16,7 +17,7 @@ export default function TicketQueue() {
   const load = useCallback(async () => {
     setState({ status: 'loading' });
     try {
-      const res = await fetch('/api/admin/tickets/pending');
+      const res = await apiFetch('/api/admin/tickets/pending');
       if (!res.ok) return setState({ status: 'error', error: describe(res.status) });
       setState({ status: 'done', rows: await res.json() });
       setDone({});
@@ -40,7 +41,7 @@ export default function TicketQueue() {
     setPending(null);
     setWorking(no);
     try {
-      const res = await fetch(`/api/admin/tickets/${encodeURIComponent(no)}/${action}`, {
+      const res = await apiFetch(`/api/admin/tickets/${encodeURIComponent(no)}/${action}`, {
         method: 'POST',
       });
       if (!res.ok) {
@@ -147,7 +148,7 @@ const BACKEND_DOWN =
 
 function describe(status) {
   if (status === 401 || status === 403) {
-    return '관리자 인증이 필요합니다 — ADMIN_BASIC 환경변수를 넣고 dev 서버를 다시 띄우세요.';
+    return '관리자 권한이 필요합니다. 담당자(GM) 계정으로 로그인해 주세요.';
   }
   // 다른 GM 이 먼저 처리했을 때 나온다. 목록이 낡은 것이므로 새로고침이 답이다.
   if (status === 409) return '이미 처리된 신청입니다. 새로고침해 최신 목록을 확인하세요.';
