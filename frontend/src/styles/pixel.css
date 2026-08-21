@@ -9,10 +9,16 @@
       배지)에만 붙인다. 글자색은 전부 WCAG AA(본문 4.5:1, 굵은 테두리 3:1)를
       넘도록 골랐다 — 색을 바꾸면 대비를 다시 재라.
 
-   2) 픽셀 폰트는 12px 의 배수에서만 쓴다.
-      Galmuri11 은 em 박스가 12도트다(upem 1200 / 1도트 100units). 12·24·36·48px
-      에서만 도트가 화면 픽셀과 1:1 로 맞는다. 14px·18px 로 두면 안티에일리어싱이
-      끼어 흐려진다 — 힌팅 테이블이 없어서 브라우저가 보정해 주지 못한다.
+   2) 픽셀 폰트는 자기 격자의 배수에서만 쓴다. 서체마다 격자가 다르다.
+      Galmuri11 은 em 박스가 12도트(upem 1200 / 1도트 100units) → 24 · 36px.
+      Galmuri14 는 15도트(upem 1500) → 15 · 30px.
+      격자를 벗어나면 힌팅 테이블이 없어서 브라우저가 보정을 못 하고 흐려진다.
+      실측(안티에일리어싱된 픽셀 비율): G11@12px 57.6% · G11@13px 82.8%
+                                      G14@15px 61.9% · G14@16px 82.9%
+
+      잔글씨에 Galmuri11 을 쓰지 않는 이유가 여기 있다. G11 의 최소 격자는 12px 인데
+      12px 한글은 획이 1px 이라 본문 16px 에서 뚝 떨어져 읽기 어렵다. G14 는 같은
+      선명도로 글자를 24% 크게 쓸 수 있어서 잔글씨는 전부 이쪽을 쓴다.
 
    3) 곡선을 쓰지 않는다.
       border-radius 대신 .px 의 계단형 모서리를 쓴다. 그림자도 흐리지 않는다.
@@ -20,21 +26,24 @@
    ========================================================================= */
 
 /* ── 폰트 ────────────────────────────────────────────────────────────────
-   Galmuri11 (갈무리11) · SIL OFL 1.1 · (c) 2019–2025 Lee Minseo
-   현대 한글 11,172자를 전부 포함한다 — 한글이 깨질 일이 없다.
+   Galmuri (갈무리) · SIL OFL 1.1 · (c) 2019–2025 Lee Minseo
+   두 굵기 모두 현대 한글 11,172자를 전부 포함한다 — 한글이 깨질 일이 없다.
    자세한 내용은 public/fonts/README.txt 참고. */
 @font-face {
+  /* 제목·브랜드 전용. Bold 만 받는다 — 이 서체는 큰 크기에서만 쓴다. */
   font-family: 'Galmuri11';
-  src: url('/fonts/Galmuri11.woff2') format('woff2');
-  font-weight: 400;
+  src: url('/fonts/Galmuri11-Bold.woff2') format('woff2');
+  font-weight: 700;
   font-style: normal;
   /* swap — 폰트가 늦게 와도 글자는 먼저 보인다. 상담 화면이 빈 채로 멈추지 않는다. */
   font-display: swap;
 }
 @font-face {
-  font-family: 'Galmuri11';
-  src: url('/fonts/Galmuri11-Bold.woff2') format('woff2');
-  font-weight: 700;
+  /* 작은 UI 라벨 전용. Bold 가 없으므로 font-weight 를 올리지 않는다
+     — 가짜 굵게(faux bold)가 걸리면 도트가 뭉개진다. */
+  font-family: 'Galmuri14';
+  src: url('/fonts/Galmuri14.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -43,6 +52,23 @@
   /* ── 픽셀 단위 ──
      모든 테두리·모서리·간격의 기준. 이 값이 도트 한 칸이다. */
   --u: 4px;
+
+  /* ── 서체 세 층 ──
+     층마다 쓸 수 있는 크기가 정해져 있다. 아래 크기를 벗어나면 도트가 흐려진다.
+
+       --font-display  Galmuri11 Bold · 24px / 36px    제목 · 브랜드
+       --font-pixel    Galmuri14      · 15px / 30px    메뉴 · 배지 · 버튼 · 잔글씨
+       --font-body     시스템 고딕     · 15px 이상      읽는 글 전부
+
+     왜 잔글씨에 Galmuri11 을 안 쓰는가 — Galmuri11 은 12px 배수에서만 선명한데,
+     12px 한글은 획이 1px 이라 본문 16px 에서 뚝 떨어져 읽기 힘들다.
+     Galmuri14 는 15px 배수가 격자라, 같은 선명도로 글자를 24% 크게 쓸 수 있다.
+     (흐린 픽셀 비율 — G11@12px 57.6% / G14@15px 61.9% / G11@13px 82.8%) */
+  --font-display: 'Galmuri11', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-pixel: 'Galmuri14', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    Pretendard, 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
 
   /* ── 낮 팔레트 (레퍼런스: 잔디밭 + 나무 간판 + 크림 양피지) ── */
   --grass:     #cfe6a8;   /* 페이지 바탕 — 잔디 */
@@ -452,13 +478,17 @@ html { scroll-padding-top: 6rem; }
 body {
   margin: 0;
   color: var(--ink);
+  /* Galmuri14 에는 Bold 가 없다. font-weight:700 이 걸리면 브라우저가 가짜 굵게를
+     합성해 1px 획이 두 겹으로 번진다 — 도트가 뭉개진다. 합성 자체를 막는다.
+     본문 고딕과 Galmuri11 은 진짜 굵기를 가지고 있어 영향이 없다.
+     픽셀 라벨에서 강조가 필요하면 굵기 대신 색이나 채움을 쓴다. */
+  font-synthesis: none;
   background-color: var(--grass);
   background-image: var(--grass-tile);
   background-repeat: repeat;
   /* 도트를 확대할 일이 있어도 흐려지지 않게 */
   image-rendering: pixelated;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
-    Pretendard, 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.75;
   word-break: keep-all;      /* 한글은 어절 단위로 끊는다 */
@@ -468,7 +498,7 @@ body {
 /* 픽셀 폰트를 붙이는 유틸.
    letter-spacing 을 주지 않는다 — 도트 사이가 벌어지면 자간이 깨져 보인다. */
 .pixel-type {
-  font-family: 'Galmuri11', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: var(--font-pixel);
   letter-spacing: 0;
   font-weight: 400;
 }
@@ -483,8 +513,10 @@ a { color: var(--rose-deep); text-underline-offset: 3px; }
 }
 
 code {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
-  font-size: 0.85em;
+  font-family: var(--font-mono);
+  /* em 이 아니라 절대 크기다. 0.85em 으로 두면 15px 라벨 안에서 12.8px,
+     그 안에 또 중첩되면 10px 까지 내려간다 — 어디에 놓이든 같게 읽혀야 한다. */
+  font-size: 13px;
   color: var(--ink);
   background: var(--cream-3);
   padding: 0.1em 0.4em;
@@ -524,7 +556,7 @@ code {
 }
 
 .brand {
-  font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+  font-family: var(--font-display);
   font-size: 24px;              /* 12px 배수 — 도트가 딱 맞는다 */
   line-height: 32px;
   font-weight: 700;
@@ -545,21 +577,22 @@ code {
   --px-bg: var(--cream-2);
   --px-bd: var(--wood-2);
   --px-u: 3px;
-  font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-  font-size: 12px;              /* Galmuri11 의 기준 크기 */
-  line-height: 20px;
+  font-family: var(--font-pixel);
+  font-size: 15px;              /* Galmuri14 의 격자 크기 */
+  line-height: 22px;
   letter-spacing: 0;
   color: var(--ink);
   text-decoration: none;
-  padding: 6px 12px;
+  padding: 7px 13px;
   transition: transform 60ms steps(1);
 }
 .site-header nav a:hover { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
 .site-header nav a.active {
+  /* 현재 위치는 채움색으로 알린다. 굵기를 쓰지 않는다 —
+     Galmuri14 에는 Bold 가 없어서 가짜 굵게가 걸릴 자리다. */
   --px-bg: var(--rose);
   --px-bd: var(--cream);
   color: var(--on-fill);
-  font-weight: 700;
 }
 .site-header nav a:active { transform: translateY(3px); }
 
@@ -585,13 +618,13 @@ main {
   margin: 0 auto 3rem;
   padding: 1rem 1.25rem;
   color: var(--ink-soft);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   line-height: 1.7;
 }
 
 /* ── 문서 제목 ── */
 h1 {
-  font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+  font-family: var(--font-display);
   font-size: 36px;              /* 12 x 3 */
   line-height: 48px;
   font-weight: 700;
@@ -604,7 +637,7 @@ h1 {
 .lede {
   color: var(--ink-soft);
   margin: 0 0 1.75rem;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 /* 형광펜 자리다 — 위에 올라가는 건 본문색(--ink)이므로 --sun 이 아니라 --mark 다.
    --sun 을 쓰면 밤에 밝은 금색 위에 밝은 잉크가 얹혀 1.9:1 까지 떨어진다. */

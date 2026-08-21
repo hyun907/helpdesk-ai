@@ -102,7 +102,7 @@ const items = docs
   .doc-list a:active { transform: translateY(var(--u)); }
 
   .doc-title {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-family: var(--font-display);
     font-size: 24px; line-height: 32px; letter-spacing: 0; font-weight: 700;
     color: var(--ink);
   }
@@ -115,11 +115,10 @@ const items = docs
     overflow: hidden;
   }
   .doc-meta {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
     color: var(--ink-soft); margin-top: 0.3rem;
   }
-  .doc-meta code { font-size: 11px; }
   .doc-meta .dot { margin: 0 0.4rem; color: var(--rose); }
 
   @media (prefers-reduced-motion: reduce) {

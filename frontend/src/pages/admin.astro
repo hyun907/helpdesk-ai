@@ -42,14 +42,14 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
   .inspector .topk {
     display: flex; align-items: center; gap: 0.45rem;
     padding: 0 0.7rem;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; letter-spacing: 0;
+    font-family: var(--font-pixel);
+    font-size: 15px; letter-spacing: 0;
     color: var(--ink-soft); background: var(--cream-2);
     border: 3px solid var(--wood-2); border-radius: 0;
   }
   .inspector .topk input {
     width: 3.4rem; padding: 0.35rem 0.4rem;
-    font: inherit; font-size: 12px;
+    font: inherit; font-size: 15px;
     color: var(--ink); background: transparent;
     border: 0; border-left: 3px solid var(--wood-2); border-radius: 0;
   }
@@ -58,8 +58,8 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
     --px-bg: var(--rose);
     --px-bd: var(--wood);
     padding: 0.6rem 1.1rem;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; letter-spacing: 0; font-weight: 700;
+    font-family: var(--font-pixel);
+    font-size: 15px; letter-spacing: 0; font-weight: 400;
     color: var(--on-fill);
   }
   .inspector button:hover:not(:disabled) { --px-bg: var(--rose-2); }
@@ -68,7 +68,7 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
     --px-bd: var(--wood-2);
     --px-u: 3px;
     color: var(--ink); font-weight: 400;
-    padding: 5px 12px; font-size: 12px;
+    padding: 6px 13px; font-size: 15px;
   }
   .inspector button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
   /* 되돌릴 수 없는 재색인 — 색으로 먼저 경고한다 */
@@ -76,7 +76,7 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
     --px-bg: var(--danger-fill);
     --px-bd: var(--danger);
     color: var(--on-fill);
-    padding: 5px 12px; font-size: 12px;
+    padding: 6px 13px; font-size: 15px;
   }
   .inspector button.danger:hover:not(:disabled) { --px-bg: var(--danger-fill-2); }
 
@@ -92,8 +92,8 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
     ) 1;
   }
   .inspector .hint {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
     color: var(--ink-soft);
   }
   .inspector .hint.ok { color: var(--ink); }
@@ -120,13 +120,13 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
   .inspector .results li {
     --px-bg: var(--cream-2);
     --px-bd: var(--wood-2);
-    display: grid; grid-template-columns: 2.4rem 1fr; gap: 0.75rem;
+    display: grid; grid-template-columns: 2.7rem 1fr; gap: 0.75rem;
     padding: 0.95rem 1.15rem;
   }
   /* 순위 = 아이템 슬롯 번호 */
   .inspector .rank {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0; font-weight: 400;
     color: var(--on-fill); background: var(--sun);
     text-align: center;
     align-self: start;
@@ -140,14 +140,14 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
   }
   .inspector .head a { font-weight: 700; font-size: 0.95rem; }
   .inspector .heading {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
     color: var(--on-fill);
-    padding: 1px 7px;
+    padding: 2px 8px;
     background: var(--mint);
     box-shadow: 0 0 0 2px var(--wood-2);
   }
-  .inspector .version { font-size: 0.78rem; color: var(--ink-soft); }
+  .inspector .version { font-size: 0.88rem; color: var(--ink-soft); }
 
   .inspector .score {
     display: flex; align-items: center; gap: 0.6rem;
@@ -176,7 +176,7 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
   }
   .inspector .drop {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.75rem; color: var(--ink-soft);
+    font-size: 0.82rem; color: var(--ink-soft);
     font-variant-numeric: tabular-nums;
   }
   /* 낙차가 큰 지점 — 임계값을 여기쯤 두라는 신호다. */

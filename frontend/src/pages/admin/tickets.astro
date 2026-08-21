@@ -31,8 +31,8 @@ import TicketQueue from '../../components/TicketQueue.jsx';
     ) 1;
   }
   .queue .count {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 24px; letter-spacing: 0;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 24px; letter-spacing: 0;
     color: var(--ink-soft);
   }
   .queue .count strong {
@@ -65,7 +65,7 @@ import TicketQueue from '../../components/TicketQueue.jsx';
     display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
     margin-bottom: 0.6rem;
   }
-  .queue .no { font-size: 0.85rem; font-weight: 700; }
+  .queue .no { font-size: 0.9rem; font-weight: 700; }
   /* 두 종류는 되돌리기 어려운 방향이 다르다 — 재화 생성 vs 제재 효력 해제.
      색만으로 구분하지 않고 앞에 표식을 하나씩 붙인다. */
   .queue .type {
@@ -73,9 +73,9 @@ import TicketQueue from '../../components/TicketQueue.jsx';
     display: inline-block;
     --px-u: 3px;
     --px-bd: var(--wood-2);
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
-    padding: 2px 9px;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
+    padding: 3px 10px;
     color: var(--on-fill);
   }
   .queue .type.recovery { --px-bg: var(--sky); }
@@ -84,8 +84,8 @@ import TicketQueue from '../../components/TicketQueue.jsx';
   .queue .type.appeal::before { content: '※ '; }
 
   .queue .when {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
     color: var(--ink-soft); margin-left: auto;
   }
 
@@ -101,9 +101,9 @@ import TicketQueue from '../../components/TicketQueue.jsx';
     --px-bg: var(--cream);
     --px-bd: var(--wood-2);
     --px-u: 3px;
-    padding: 5px 14px;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    padding: 6px 15px;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0; font-weight: 400;
     color: var(--ink);
   }
   .queue .actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
@@ -119,9 +119,9 @@ import TicketQueue from '../../components/TicketQueue.jsx';
   .queue button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); color: var(--ink); }
 
   .queue .warn {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
-    color: var(--danger); font-weight: 700;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
+    color: var(--danger); font-weight: 400;
   }
   .queue .warn::before { content: '⚠ '; }
 

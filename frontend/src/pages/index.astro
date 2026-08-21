@@ -21,11 +21,10 @@ import Chat from '../components/Chat.jsx';
 
   .chat-head {
     display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
     color: var(--ink-soft);
   }
-  .chat-head code { font-size: 11px; }
 
   /* ── 대화 로그 ─────────────────────────────────────
      게임의 대사창처럼 한 겹 안쪽으로 파인 판. 스크롤되는 요소라
@@ -104,12 +103,12 @@ import Chat from '../components/Chat.jsx';
      레퍼런스 하단의 아이템 슬롯처럼. 누를 수 있는 칸이라는 게 보여야 한다. */
   .chat .sources {
     display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
-    font-size: 12px;
+    font-size: 15px;
   }
   .chat .sources-label {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
-    color: var(--ink-soft); font-weight: 700;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
+    color: var(--ink-soft); font-weight: 400;
   }
   .chat .sources-label::before { content: '▪ '; color: var(--mint); }
   .chat .chip {
@@ -118,9 +117,9 @@ import Chat from '../components/Chat.jsx';
     --px-bg: var(--mint);
     --px-bd: var(--wood-2);
     --px-u: 3px;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
-    padding: 4px 10px;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
+    padding: 5px 11px;
     color: var(--on-fill);
     text-decoration: none;
     transition: transform 60ms steps(1);
@@ -128,7 +127,7 @@ import Chat from '../components/Chat.jsx';
   .chat .chip:hover { --px-bg: var(--sun); }
   .chat .chip:active { transform: translateY(3px); }
   .chat .sources.none {
-    color: var(--ink-soft); font-size: 0.82rem; font-style: normal;
+    color: var(--ink-soft); font-size: 0.9rem; font-style: normal;
   }
 
   /* ── 입력 ──────────────────────────────────────────
@@ -153,16 +152,16 @@ import Chat from '../components/Chat.jsx';
     --px-bg: var(--rose);
     --px-bd: var(--wood);
     padding: 0 1.3rem;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; letter-spacing: 0; font-weight: 700;
+    font-family: var(--font-pixel);
+    font-size: 15px; letter-spacing: 0; font-weight: 400;
   }
   .chat button.ghost {
     --px-bg: var(--cream-2);
     --px-bd: var(--wood-2);
     --px-u: 3px;
-    padding: 4px 12px;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 400;
+    padding: 5px 13px;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0; font-weight: 400;
     color: var(--ink);
   }
   .chat button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); }

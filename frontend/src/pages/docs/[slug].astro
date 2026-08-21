@@ -73,15 +73,15 @@ const sourceFile = `${entry.id}.md`;
 <style is:global>
   .eyebrow {
     margin: 0 0 0.6rem;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0;
     color: var(--ink-soft);
   }
   .eyebrow::before { content: '▤ '; color: var(--wood); }
 
   /* 문서 제목 — 아래를 나무 울타리 한 줄로 받친다 */
   .doc-title {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-family: var(--font-display);
     font-size: 36px; line-height: 48px; letter-spacing: 0; font-weight: 700;
     color: var(--ink);
     margin: 0 0 1.5rem; padding-bottom: 0.9rem;
@@ -103,11 +103,11 @@ const sourceFile = `${entry.id}.md`;
   }
   .toc-title {
     margin: 0 0 0.6rem;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0; font-weight: 400;
     color: var(--on-fill);
     display: inline-block;
-    padding: 2px 9px;
+    padding: 3px 10px;
     background: var(--sun);
     box-shadow: 0 0 0 2px var(--wood-2);
   }
@@ -128,9 +128,9 @@ const sourceFile = `${entry.id}.md`;
     --px-bd: var(--wood-2);
     --px-u: 3px;
     display: inline-block; margin-top: 2.5rem;
-    padding: 6px 14px;
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    padding: 7px 15px;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0; font-weight: 400;
     color: var(--ink); text-decoration: none;
     /* .px 목록에 없는 요소라 판을 직접 두르지 않고 각진 테두리로 처리한다 */
     border: 3px solid var(--wood-2);
@@ -143,7 +143,7 @@ const sourceFile = `${entry.id}.md`;
   /* 원문 h1 은 위에서 .doc-title 로 이미 렌더했다. 접근성 트리에서도 빠지도록 display:none. */
   .prose h1 { display: none; }
   .prose h2 {
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-family: var(--font-display);
     font-size: 24px; line-height: 32px; letter-spacing: 0; font-weight: 700;
     margin: 2.75rem 0 1rem;
     scroll-margin-top: 6rem;
@@ -202,8 +202,8 @@ const sourceFile = `${entry.id}.md`;
   .prose td { min-width: 6em; }
   .prose thead th {
     background: var(--cream-3);
-    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    font-family: var(--font-pixel);
+    font-size: 15px; line-height: 22px; letter-spacing: 0; font-weight: 400;
     color: var(--ink);
     text-align: left;
   }
