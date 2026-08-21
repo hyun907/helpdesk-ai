@@ -21,50 +21,49 @@
 """
 
 # ── 글자판 ────────────────────────────────────────────────────────
-#   .  비움      X  외곽선
-#   a  밝은 면   b  중간      c  그늘
-#   w  나무 밝음 v  나무 중간
-#   p  갓·꽃잎   q  갓 그늘   y  꽃술   o  갓 반점
-#   s  돌 밝음   t  돌 중간   u  돌 그늘
-#   e  버섯대     f  버섯대 그늘
-#   m  줄기      l  잎
+# 외곽선은 재료마다 글자가 다르다. 하나(X)로 두고 이웃을 보고 색을 추측했더니,
+# 캐노피 아래쪽 외곽선이 줄기의 갈색을 집어와 나무 밑에 갈색 점이 찍혔다.
+# 추측하지 말고 명시한다.
+#
+#   .  비움
+#   a  잎 밝음    b  잎 중간   c  잎 그늘    X  잎 외곽선
+#   w  나무 밝음  v  나무 중간              Y  나무 외곽선
+#   p  갓·꽃잎    q  갓 그늘   y  꽃술   o  갓 반점   Z  갓·꽃잎 외곽선
+#   e  버섯 대    f  대 그늘                E  대 외곽선
+#   s  돌 밝음    t  돌 중간   u  돌 그늘    N  돌 외곽선
+#   m  줄기(초록)
 SPRITES = {}
 
 SPRITES['tree'] = [
-    "...XXX...XXX...",
-    "..XaaaXXXaaaX..",
-    ".XaaaaaaaaaaaX.",
-    "XaaaaaaaaaaaaaX",
-    "XaaaaaabbbbbbbX",
-    "XaaaabbbbbbbbbX",
-    "XaabbbbbbbbbbcX",
-    ".XbbbbbbbbbcccX",
-    ".XbbbbbbbccccX.",
-    "..XbbbbcccccX..",
-    "...XXcccccXX...",
-    ".....XwwvX.....",
-    ".....XwvvX.....",
-    ".....XwvvX.....",
-    "....XwwvvvX....",
-    "....XXXXXXX....",
+    "....XXXXX....",
+    "..XXaaaabXX..",
+    ".XaaaaaabbbX.",
+    "XaaaaaaabbbcX",
+    "XaaaaaaabbbcX",
+    "XaaaaaabbbbcX",
+    ".XaaaabbbbcX.",
+    ".XbbbbbbbbcX.",
+    "..XXbbbbbXX..",
+    "....XbbbX....",
+    "....YwvvY....",
+    "....YwvvY....",
+    "....YwvvY....",
+    "...YwvvvvY...",
+    "...YYYYYYY...",
 ]
 
 SPRITES['tree2'] = [
-    "....XXXXX......",
-    "..XXaaaaaXX....",
-    ".XaaaaaaaaaX...",
-    "XaaaaaaaaaaaX..",
-    "XaaaaaabbbbbX..",
-    ".XaaabbbbbbbXX.",
-    ".XaabbbbbbbbbX.",
-    "..XbbbbbbbbcbX.",
-    "..XXbbbbbbcccX.",
-    "....XXbbbcccX..",
-    "......XXcccX...",
-    ".....XwwvX.....",
-    ".....XwvvX.....",
-    "....XwwvvvX....",
-    "....XXXXXXX....",
+    "...XXXXX...",
+    ".XXaaaabXX.",
+    "XaaaaaabbbX",
+    "XaaaaaabbbX",
+    ".XaaaabbbX.",
+    "..XaabbbX..",
+    "...XbbbX...",
+    "...YwvvY...",
+    "...YwvvY...",
+    "..YwvvvvY..",
+    "..YYYYYYY..",
 ]
 
 SPRITES['bush'] = [
@@ -79,39 +78,39 @@ SPRITES['bush'] = [
 ]
 
 SPRITES['mushroom'] = [
-    "....XXXXX....",
-    "..XXpppppXX..",
-    ".XppppppppqX.",
-    "XppppopppqqqX",
-    "XpoppppppqqqX",
-    "XqqqqqqqqqqqX",   # 갓 아랫면(주름) — 이 한 줄이 갓과 대를 갈라 준다
-    ".XXXXeefXXXX.",   # 갓 끝단이 대보다 넓게 걸쳐야 버섯으로 보인다
-    "....XeefX....",
-    "....XeefX....",
-    "...XeeffX....",
-    "...XXXXXX....",
+    "....ZZZZZ....",
+    "..ZZpppppZZ..",
+    ".ZppppppppqZ.",
+    "ZppppopppqqqZ",
+    "ZpoppppppqqqZ",
+    "ZqqqqqqqqqqqZ",   # 갓 아랫면(주름) — 이 한 줄이 갓과 대를 갈라 준다
+    ".ZZZZeefZZZZ.",   # 갓 끝단이 대보다 넓게 걸쳐야 버섯으로 보인다
+    "....EeefE....",
+    "....EeefE....",
+    "...EeeffE....",
+    "...EEEEEE....",
 ]
 
 SPRITES['flower'] = [
-    "..XXX..",
-    ".XpppX.",
-    "XppypqX",
-    ".XpqqX.",
-    "..XXX..",
+    "..ZZZ..",
+    ".ZpppZ.",
+    "ZppypqZ",
+    ".ZpqqZ.",
+    "..ZZZ..",
     "...m...",
-    "..lml..",
+    "..XmX..",
     "...m...",
     "...m...",
 ]
 
 SPRITES['stone'] = [
-    "...XXXX....",
-    "..XssssXX..",
-    ".XssssstttX",
-    "XsssstttttX",
-    "XssttttttuX",
-    ".XtttuuuuX.",
-    "..XXXXXXX..",
+    "...NNNN....",
+    "..NssssNN..",
+    ".NssssstttN",
+    "NsssstttttN",
+    "NssttttttuN",
+    ".NtttuuuuN.",
+    "..NNNNNNN..",
 ]
 
 SPRITES['sprout'] = [
@@ -133,19 +132,13 @@ for _n, _rows in SPRITES.items():
 # 잔디(#cfe6a8) 위에서 튀지 않게 옅게 잡았다. 외곽선도 검정이 아니라
 # 그 재료의 진한 톤이다.
 DAY = {
-    'a': '#c3e298', 'b': '#a2ce78', 'c': '#84b25e', 'X': '#5f8a46',
-    'w': '#c19a6b', 'v': '#a67c50',
+    'a': '#cbe8a4', 'b': '#9dcc73', 'c': '#76a751', 'X': '#54803e',   # 잎
+    'w': '#c19a6b', 'v': '#a67c50',                 'Y': '#7b5733',   # 나무
     'p': '#f4c3cc', 'q': '#e2a0ad', 'y': '#f2cf87', 'o': '#fdf3e4',
-    's': '#d8d7ca', 't': '#b8b7a8', 'u': '#999888',
-    'e': '#fbf2df', 'f': '#e6d8bd',
-    'm': '#7fae5c', 'l': '#9ec97a',
-}
-# 재료별 외곽선 — 'X' 는 잎 기준이라, 다른 재료는 여기서 갈아 끼운다
-OUTLINE_BY_MATERIAL = {
-    'w': '#7b5733', 'v': '#7b5733',
-    'p': '#c07d8e', 'q': '#c07d8e', 'y': '#c07d8e', 'o': '#c07d8e',
-    's': '#7f7e70', 't': '#7f7e70', 'u': '#7f7e70',
-    'e': '#c2ac86', 'f': '#c2ac86',
+                                                    'Z': '#c07d8e',   # 갓·꽃잎
+    'e': '#fbf2df', 'f': '#e6d8bd',                 'E': '#c2ac86',   # 버섯 대
+    's': '#d8d7ca', 't': '#b8b7a8', 'u': '#999888', 'N': '#7f7e70',   # 돌
+    'm': '#7fae5c',
 }
 
 
@@ -161,36 +154,13 @@ def night(color, base='#2b3446', keep=0.52):
 
 def resolve(rows):
     """글자판을 (x, y, 색) 목록으로 바꾼다.
-       외곽선(X)은 맞닿은 재료에 따라 색을 갈아 끼운다 — 나무 둘레에 초록
-       외곽선이 둘러지면 형태가 어긋나 보인다."""
-    h, w = len(rows), len(rows[0])
+       외곽선 글자가 재료마다 다르므로 그냥 표에서 꺼내면 된다 — 추측하지 않는다."""
     out = {}
-    for y in range(h):
-        for x in range(w):
-            ch = rows[y][x]
-            if ch == '.':
-                continue
-            if ch != 'X':
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch != '.':
                 out[(x, y)] = DAY[ch]
-                continue
-            # 상하좌우를 먼저 보고, 없으면 대각선까지 본다.
-            # 대각선을 안 보면 밑동 모서리처럼 사방이 외곽선인 칸이 기본값(잎 초록)으로
-            # 남아, 나무 밑동과 버섯 대 끝에 초록 점이 찍힌다.
-            col = None
-            for ring in (((1, 0), (-1, 0), (0, 1), (0, -1)),
-                         ((1, 1), (1, -1), (-1, 1), (-1, -1))):
-                for dx, dy in ring:
-                    nx, ny = x + dx, y + dy
-                    if 0 <= nx < w and 0 <= ny < h:
-                        c = rows[ny][nx]
-                        if c not in '.X' and c in OUTLINE_BY_MATERIAL:
-                            col = OUTLINE_BY_MATERIAL[c]
-                            break
-                if col:
-                    break
-            out[(x, y)] = col or DAY['X']
     return out
-
 
 # ── 배치 ──────────────────────────────────────────────────────────
 # 좌우에 띠 두 개를 세워 두니 '반복되는 기둥'으로 읽혔다. 이제 배경 전체에
@@ -217,8 +187,8 @@ POPULATION = [
     ('flower',   3, 9), ('flower',   2, 11),
     ('sprout',   3, 8), ('sprout',   2, 10),
 ]
-GAP = 14          # 오브젝트끼리 최소 간격(px)
-CLUSTER = 0.45    # 큰 것을 놓은 뒤 곁에 작은 것을 붙일 확률
+GAP = 96          # 오브젝트끼리 최소 간격(px)
+CLUSTER = 0       # 무리짓기 없음 — 붙여 놓으니 '뭉쳐 있다'로 읽혔다
 
 
 def _size(name, cell):
