@@ -4,6 +4,26 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 export async function getStaticPaths() {
   const docs = await getCollection('policies');
+
+  /**
+   * 문서가 하나도 안 잡히면 빌드를 멈춘다.
+   *
+   * 이 컬렉션은 백엔드 리소스(../src/main/resources/docs)를 직접 가리킨다.
+   * 그쪽에서 문서를 옮기거나 이름을 바꾸면 여기서는 빈 컬렉션이 되는데,
+   * Astro 는 경고만 찍고 빌드를 성공시킨다 — 종료코드 0, 산출물도 나온다.
+   * 그러면 정책 페이지만 소리 없이 사라진 채 배포되고, 답변에 붙는 출처 링크가
+   * 전부 404 가 된다. 근거를 확인하라고 만든 링크가 근거를 못 찾는 상태다.
+   *
+   * 조용히 틀리느니 시끄럽게 멈추는 편이 낫다.
+   */
+  if (docs.length === 0) {
+    throw new Error(
+      '정책 문서를 하나도 찾지 못했습니다. ' +
+        'src/content.config.ts 의 glob base 가 가리키는 경로에 .md 파일이 있는지 확인하세요 ' +
+        '— 백엔드에서 문서를 옮겼거나 이름을 바꿨을 수 있습니다.',
+    );
+  }
+
   return docs.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
 

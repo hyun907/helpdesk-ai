@@ -9,15 +9,21 @@ Astro 5.18 + React 19 아일랜드. 정적 산출(`output: 'static'`)이라 Node
 
 ```bash
 # 0) 백엔드 먼저. 프런트는 /api 를 8081 로 넘길 뿐 스스로 데이터를 갖지 않는다.
+#    저장소 루트에서:
+docker compose up -d              # PostgreSQL + pgvector (5434)
 export OPENAI_API_KEY="sk-..."
-./gradlew bootRun          # 저장소 루트에서
+./gradlew bootRun                 # → 8081
 
 # 1) 의존성 (최초 1회)
 cd frontend && npm install
 
 # 2) 개발 서버
-npm run dev                # → http://localhost:4321
+npm run dev                       # → http://localhost:4321
 ```
+
+백엔드 실행 절차의 최신 기준은 **저장소 루트 [README](../README.md)** 입니다.
+여기에는 프런트를 띄우는 데 필요한 최소만 적어 둡니다 — 옮겨 적으면 갈라집니다.
+Docker 없이 띄우는 방법(`SPRING_PROFILES_ACTIVE=local`)도 루트 README 에 있습니다.
 
 문서 페이지(`/docs`)는 마크다운만 읽으므로 **백엔드 없이도 동작**합니다.
 나머지 화면은 API 가 필요합니다.
@@ -50,10 +56,15 @@ npm run preview   # 산출물을 그대로 확인 (→ localhost:4321)
 ```
 
 > **`npm run preview` 는 `/api` 를 프록시하지 않습니다.**
-> 프록시는 `vite.server.proxy` 라 **dev 서버 전용**입니다. preview 에서는 페이지는 200 으로 뜨지만
-> API 호출이 전부 404 로 떨어집니다 — 화면은 "백엔드에 연결할 수 없습니다" 를 보여줍니다.
-> 백엔드와 함께 확인하려면 `npm run dev` 를 쓰세요. preview 는 정적 렌더 결과(문서 페이지·레이아웃)
-> 확인용입니다.
+> 프록시는 `vite.server.proxy` 라 **dev 서버 전용**입니다. preview 에서는 페이지가 200 으로
+> 잘 뜨는데 API 호출만 전부 **404** 로 떨어집니다.
+>
+> 이때 화면에 나오는 문구가 원인을 가립니다 — 404 는 "경로가 잘못됐다" 는 뜻으로 처리되기 때문에
+> 검색 점검은 "엔드포인트를 찾을 수 없습니다", 승인 대기는 "없는 신청 번호입니다" 를 보여줍니다.
+> 백엔드는 멀쩡한데 백엔드를 의심하게 됩니다.
+>
+> 백엔드와 함께 확인하려면 `npm run dev` 를 쓰세요. preview 는 정적 렌더 결과
+> (문서 페이지·레이아웃) 확인용입니다.
 
 ## 화면
 
@@ -74,7 +85,12 @@ npm run preview   # 산출물을 그대로 확인 (→ localhost:4321)
 `src/content.config.ts` 의 content collection 이 `../src/main/resources/docs` 를 직접 가리킵니다.
 RAG 가 색인하는 파일과 화면에 렌더되는 파일이 물리적으로 같아야 "출처" 가 거짓말을 하지 않습니다.
 복사본을 두면 정책을 고칠 때 한쪽만 고쳐서 인용과 원문이 어긋납니다.
-**문서 파일명이나 위치가 바뀌면 빌드가 깨집니다** — 조용히 틀리는 것보다 낫습니다.
+
+**백엔드에서 문서를 옮기거나 이름을 바꾸면 여기서 빌드가 멈춥니다.**
+Astro 기본 동작은 그렇지 않습니다 — 빈 컬렉션에 경고만 찍고 종료코드 0 으로 성공시킵니다.
+그러면 정책 페이지만 사라진 채 배포되고 출처 링크가 전부 404 가 됩니다.
+그래서 `src/pages/docs/[slug].astro` 의 `getStaticPaths` 에서 빈 컬렉션이면 예외를 던집니다.
+**이 가드를 지우면 실패가 조용해집니다.**
 
 **2. `/api/chat/stream` 은 POST 입니다.**
 
@@ -103,7 +119,9 @@ RAG 가 색인하는 파일과 화면에 렌더되는 파일이 물리적으로 
 TypeError: Cannot read properties of null (reading 'useState')
 ```
 
-Vite 가 의존성을 다시 최적화하는 과정에서 React 사본이 갈려 훅 디스패처가 null 이 됩니다.
+새 컴포넌트가 들어오면 Vite 가 의존성을 다시 최적화하는데, 그 직후 이 오류가 납니다.
+훅 디스패처가 null 인 것은 React 인스턴스가 둘로 갈렸을 때 나오는 증상이지만,
+거기까지 확인하지는 않았습니다. 해결은 확실합니다:
 
 ```bash
 rm -rf node_modules/.vite && npm run dev
