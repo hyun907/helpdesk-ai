@@ -93,44 +93,87 @@ export OPENAI_API_KEY="sk-..."
 SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ```
 
-H2 인메모리 + 인메모리 VectorStore로 동작합니다. 재시작하면 데이터가 사라집니다.
+H2 인메모리 + 인메모리 VectorStore + 인메모리 대화 이력으로 동작합니다. 포트는 동일하게 8081이고,
+아래 "동작 확인"의 명령이 그대로 통합니다. 재시작하면 색인과 대화가 전부 사라지므로
+`POST /api/admin/ingest` 를 다시 실행해야 합니다.
+
+Docker를 안 띄운다는 뜻이지 공짜라는 뜻은 아닙니다. **임베딩과 모델 호출은 그대로 발생하므로
+API 키는 여전히 필요합니다.** 이 프로파일이 없애 주는 것은 PostgreSQL 컨테이너 하나뿐입니다.
 
 ---
 
 ## 동작 확인
 
+모든 API는 인증이 필요합니다. 실습용 계정은 `SecurityConfig` 에 인메모리로 정의되어 있습니다.
+
+| 계정 | 비밀번호 | 역할 | 소유 |
+|---|---|---|---|
+| `player1` | `player1-pw` | USER | CH-1001 · CH-1002 |
+| `player2` | `player2-pw` | USER | CH-9001 |
+| `gm` | `gm-pw` | ADMIN | 인제스트 · 승인/반려 |
+
+**조회 대상은 요청 파라미터로 지정할 수 없습니다.** 계정은 인증 주체(`Principal`)에서만 가져오므로,
+`?ownerId=...` 같은 파라미터를 붙일 자리가 없습니다. 인증한 사람과 조회 대상이 같은지를 검사하는 게 아니라
+**다른 값을 넣을 자리를 없애는** 방식입니다. 이 규칙은 `CharacterControllerSecurityTest` 가 지킵니다.
+
 ```bash
 # 본인 캐릭터 → 200
-curl 'localhost:8081/api/characters/CH-1001?ownerId=player1'
+curl -u player1:player1-pw 'localhost:8081/api/characters/CH-1001'
 # {"characterId":"CH-1001","nickname":"달빛기사","job":"전사","level":87,"server":"아스가르드",...}
 
 # 타인 캐릭터 → 404  (CH-9001 은 player2 소유)
-curl 'localhost:8081/api/characters/CH-9001?ownerId=player1'
+curl -u player1:player1-pw 'localhost:8081/api/characters/CH-9001'
 # {"message":"캐릭터를 찾을 수 없습니다.","traceId":null}
 
 # 없는 캐릭터 → 404 (타인 캐릭터와 완전히 같은 응답)
-curl 'localhost:8081/api/characters/CH-0000?ownerId=player1'
+curl -u player1:player1-pw 'localhost:8081/api/characters/CH-0000'
+
+# 인증 없음 → 401
+curl 'localhost:8081/api/characters/CH-1001'
 ```
 
 세 번째가 두 번째와 **같은 응답**인 것이 핵심입니다. 403을 반환하면 "그 캐릭터는 존재한다"는 정보가 새어 나갑니다. 캐릭터 ID는 `CH-####` 형식이라 순회 조회가 쉬우므로, 존재 여부만 새어도 실재하는 ID를 전부 알아낼 수 있습니다.
 
 ```bash
 # 내 캐릭터 목록 (레벨 내림차순)
-curl 'localhost:8081/api/characters?ownerId=player1'
+curl -u player1:player1-pw 'localhost:8081/api/characters'
 
 # 인벤토리 — 캐릭터 소유자만 볼 수 있습니다
-curl 'localhost:8081/api/characters/CH-1001/inventory?ownerId=player1'
+curl -u player1:player1-pw 'localhost:8081/api/characters/CH-1001/inventory'
 # [{"itemName":"달빛 대검","grade":"전설","quantity":1}, ...]
 
 # 제재 이력 — 계정 단위입니다 (제재는 캐릭터가 아니라 계정에 걸립니다)
-curl 'localhost:8081/api/characters/sanctions?ownerId=player1'
+curl -u player1:player1-pw 'localhost:8081/api/characters/sanctions'
 
-# 정책 문서 인제스트 — 두 번 실행해도 청크 수가 같아야 정상입니다
-curl -X POST 'localhost:8081/api/admin/ingest'
+# 정책 문서 인제스트 — ADMIN 만. 두 번 실행해도 청크 수가 같아야 정상입니다 (17청크)
+curl -u gm:gm-pw -X POST 'localhost:8081/api/admin/ingest'
 
 # 무엇이 검색되는지 눈으로 확인 (유사도 점수 포함)
-curl 'localhost:8081/api/admin/chunks?q=아이템 복구 기한'
+curl -u gm:gm-pw -G --data-urlencode 'q=아이템 복구 기한' 'localhost:8081/api/admin/chunks'
 ```
+
+여기부터는 모델을 호출합니다 — API 키가 필요합니다.
+
+```bash
+# 규정 질문 → 문서 근거 + 출처
+curl -u player1:player1-pw -H 'Content-Type: application/json' \
+  -X POST 'localhost:8081/api/chat' \
+  -d '{"question":"아이템 복구 신청 기한이 며칠인가요?","sessionId":"demo-1"}'
+# {"answer":"... 14일 이내 ...","sources":[{"document":"item-recovery-policy.md",...}],"toolUsed":false}
+
+# 실시간 조회 → 도구 호출 (toolUsed:true)
+curl -u player1:player1-pw -H 'Content-Type: application/json' \
+  -X POST 'localhost:8081/api/chat' \
+  -d '{"question":"제 캐릭터 목록 알려주세요","sessionId":"demo-1"}'
+
+# 같은 sessionId 로 이어서 물으면 앞 대화를 참조합니다
+curl -u player1:player1-pw -H 'Content-Type: application/json' \
+  -X POST 'localhost:8081/api/chat' \
+  -d '{"question":"제가 방금 뭘 물어봤죠?","sessionId":"demo-1"}'
+```
+
+`sources` 와 `toolUsed` 를 함께 보면 답이 어디서 왔는지 구분됩니다 — 출처가 있으면 문서에서,
+`toolUsed:true` 면 실시간 데이터에서, 둘 다 비어 있으면 대화 이력에서 나온 답입니다.
 
 ### 시드 데이터
 

@@ -20,8 +20,10 @@ spring:
 
   autoconfigure:
     exclude:
-      # pgvector·JDBC 메모리 자동구성을 끈다 — 인메모리로 대체된다
+      # pgvector·JDBC 메모리 자동구성을 끈다 — LocalVectorStoreConfig 가 인메모리로 대체한다.
+      # 끄기만 하고 대체 빈을 두지 않으면 애플리케이션이 아예 뜨지 않는다(No qualifying bean).
       - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+      - org.springframework.ai.model.chat.memory.repository.jdbc.autoconfigure.JdbcChatMemoryRepositoryAutoConfiguration
 
 helpdesk:
   rag:
