@@ -114,15 +114,6 @@ SPRITES['stone'] = [
     "..XXXXXXX..",
 ]
 
-SPRITES['log'] = [
-    "..XXXXXXXXX..",
-    ".XwwvvvvvvvX.",
-    "XwXvXvvvvvvvX",
-    "XwXvXvvvvvvvX",
-    ".XwwvvvvvvvX.",
-    "..XXXXXXXXX..",
-]
-
 SPRITES['sprout'] = [
     "..X...X..",
     ".XaX.XaX.",
@@ -216,7 +207,6 @@ POPULATION = [
     ('tree',     4, 5), ('tree',     3, 4),
     ('tree2',    4, 4), ('tree2',    3, 4),
     ('bush',     4, 6), ('bush',     3, 7),
-    ('log',      3, 3), ('log',      2, 2),
     ('stone',    3, 5), ('stone',    2, 5),
     ('mushroom', 3, 5), ('mushroom', 2, 6),
     ('flower',   3, 9), ('flower',   2, 11),
