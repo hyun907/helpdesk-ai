@@ -118,10 +118,23 @@
   --sign-ink:    #fdf5e2;   /* 4.86:1 */
   --sign-accent: #f7c3d0;   /* 3.44:1 (대형 텍스트) */
   --sign-deco:   #f7d99a;   /* 3.86:1 (장식) */
+  --sign-hi:     #a87c4f;
+  --sign-lo1:    #77563a;
+  --sign-lo2:    #5f452e;
 
-  /* 버튼 입체감. 밤에는 흰 하이라이트를 약하게 — 그대로 두면 테두리처럼 튄다. */
-  --bevel-hi: rgb(255 255 255 / 0.45);
-  --bevel-lo: rgb(0 0 0 / 0.13);
+
+  /* ── 단계 음영(도트 그라데이션) ──
+     픽셀 아트는 색을 부드럽게 섞지 않는다. 한 단계씩 뚝뚝 끊어 칠한다.
+     아래 두 색을 섞어 판마다 밝은 띠 1칸 · 어두운 띠 2칸을 만든다.
+     --px-bg 가 무엇이든 자동으로 같은 계열의 단계가 나온다(color-mix).
+
+     섞는 비율을 키우면 단계가 도드라지는 대신 글자가 앉는 바닥이 얼룩진다.
+     띠는 도트 한 칸(--px-u)씩이고 안쪽 여백 안에 들어가므로 본문에 닿지 않는다. */
+  --head-lo1: #a08a72;
+  --head-lo2: #c9b79c;
+
+  --tint: #ffffff;    /* 위쪽 밝은 단계 */
+  --shade: #7a5535;   /* 아래쪽 어두운 단계 — 따뜻한 나무 그늘 */
 
   /* ── 레거시 토큰 별칭 ──
      페이지별 스타일이 아직 이 이름들을 쓴다. 새 팔레트로 갈아끼워
@@ -185,9 +198,16 @@
     --sign-ink:    #efe4cf;   /* 9.53:1 */
     --sign-accent: #f7c3d0;   /* 7.81:1 */
     --sign-deco:   #d8b45e;   /* 6.06:1 */
+    --sign-hi:     #56472f;
+    --sign-lo1:    #362d21;
+    --sign-lo2:    #2a231a;
 
-    --bevel-hi: rgb(255 255 255 / 0.16);
-    --bevel-lo: rgb(0 0 0 / 0.22);
+
+    --head-lo1: #7d6f5c;
+    --head-lo2: #574f45;
+
+    --tint: #9db3d2;
+    --shade: #10151d;
 
     --grass-tile: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27128%27%20height%3D%27128%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20x%3D%2718%27%20y%3D%2734%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23374457%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2730%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%2722%27%20y%3D%2730%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%2716%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2788%27%20y%3D%2720%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2796%27%20y%3D%2720%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%2724%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%2720%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%233b3e45%27%2F%3E%3Crect%20x%3D%2760%27%20y%3D%2796%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23374457%27%2F%3E%3Crect%20x%3D%2756%27%20y%3D%2792%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%2764%27%20y%3D%2792%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%27116%27%20y%3D%27104%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%276%27%20y%3D%2788%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3Crect%20x%3D%2740%27%20y%3D%2760%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23323c50%27%2F%3E%3C%2Fsvg%3E");
 
@@ -253,6 +273,10 @@
   --px-bd: var(--wood);
   --_c1: var(--px-u);
   --_c2: calc(var(--px-u) * 2);
+  /* 단계 음영 3칸. 판 색이 바뀌면 따라 바뀐다. */
+  --_hi:  color-mix(in srgb, var(--px-bg) 88%, var(--tint));
+  --_lo1: color-mix(in srgb, var(--px-bg) 93%, var(--shade));
+  --_lo2: color-mix(in srgb, var(--px-bg) 85%, var(--shade));
   border: 0;
   border-radius: 0;
 }
@@ -287,21 +311,38 @@
     linear-gradient(var(--px-bd), var(--px-bd)),
     linear-gradient(var(--px-bd), var(--px-bd)),
     linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--px-bd), var(--px-bd));
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    /* 단계 음영 — 위 한 칸 밝게, 아래 두 칸 단계적으로 어둡게,
+       그 사이에 디더링 한 줄(체커)로 두 색을 잇는다 */
+    linear-gradient(var(--_hi), var(--_hi)),
+    repeating-conic-gradient(var(--_lo1) 0 25%, transparent 0 50%),
+    linear-gradient(var(--_lo1), var(--_lo1)),
+    linear-gradient(var(--_lo2), var(--_lo2));
   background-position:
     left var(--_c1) top var(--_c1),
     right var(--_c1) top var(--_c1),
     left var(--_c1) bottom var(--_c1),
     right var(--_c1) bottom var(--_c1),
-    top, bottom, left, right;
+    top, bottom, left, right,
+    left var(--_c1) top var(--_c1),
+    left var(--_c1) bottom calc(var(--_c1) * 3),
+    left var(--_c1) bottom var(--_c2),
+    left var(--_c1) bottom var(--_c1);
   background-size:
     var(--_c1) var(--_c1),
     var(--_c1) var(--_c1),
     var(--_c1) var(--_c1),
     var(--_c1) var(--_c1),
     100% var(--_c1), 100% var(--_c1),
-    var(--_c1) 100%, var(--_c1) 100%;
-  background-repeat: no-repeat;
+    var(--_c1) 100%, var(--_c1) 100%,
+    calc(100% - var(--_c2)) var(--_c1),
+    var(--_c2) var(--_c2),
+    calc(100% - var(--_c2)) var(--_c1),
+    calc(100% - var(--_c2)) var(--_c1);
+  background-repeat:
+    no-repeat, no-repeat, no-repeat, no-repeat,
+    no-repeat, no-repeat, no-repeat, no-repeat,
+    no-repeat, repeat-x, no-repeat, no-repeat;
   background-color: var(--px-bg);
   clip-path: polygon(
     var(--_c2) 0, calc(100% - var(--_c2)) 0,
@@ -400,8 +441,12 @@
     linear-gradient(var(--px-bd), var(--px-bd)),
     linear-gradient(var(--px-bd), var(--px-bd)),
     linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--bevel-hi), var(--bevel-hi)),
-    linear-gradient(var(--bevel-lo), var(--bevel-lo));
+    /* 판과 같은 단계 체계를 쓴다. 반투명 베벨을 쓰면 채움색이 바뀔 때마다
+       명암이 제멋대로 달라져 버튼끼리 톤이 어긋난다. */
+    linear-gradient(var(--_hi), var(--_hi)),
+    repeating-conic-gradient(var(--_lo1) 0 25%, transparent 0 50%),
+    linear-gradient(var(--_lo1), var(--_lo1)),
+    linear-gradient(var(--_lo2), var(--_lo2));
   background-position:
     left var(--_c1) top var(--_c1),
     right var(--_c1) top var(--_c1),
@@ -409,6 +454,8 @@
     right var(--_c1) bottom var(--_c1),
     top, bottom, left, right,
     left var(--_c1) top var(--_c1),
+    left var(--_c1) bottom calc(var(--_c1) * 3),
+    left var(--_c1) bottom var(--_c2),
     left var(--_c1) bottom var(--_c1);
   background-size:
     var(--_c1) var(--_c1),
@@ -418,7 +465,13 @@
     100% var(--_c1), 100% var(--_c1),
     var(--_c1) 100%, var(--_c1) 100%,
     calc(100% - var(--_c2)) var(--_c1),
+    var(--_c2) var(--_c2),
+    calc(100% - var(--_c2)) var(--_c1),
     calc(100% - var(--_c2)) var(--_c1);
+  background-repeat:
+    no-repeat, no-repeat, no-repeat, no-repeat,
+    no-repeat, no-repeat, no-repeat, no-repeat,
+    no-repeat, repeat-x, no-repeat, no-repeat;
 }
 
 :where(
@@ -553,10 +606,17 @@ code {
   gap: 1.5rem;
   flex-wrap: wrap;
   padding: 0.85rem 1.25rem;
-  background: var(--sign);
-  /* 아래쪽에 나뭇결 한 줄 — 간판 두께를 만든다 */
-  box-shadow: inset 0 calc(var(--u) * -1) 0 var(--sign-edge),
-              0 var(--u) 0 rgb(0 0 0 / 0.12);
+  /* 나무 판을 단계로 칠한다 — 위 한 칸 밝게, 아래 두 칸 단계적으로 어둡게.
+     부드러운 그라데이션이 아니라 도트 한 칸씩 뚝 끊기는 띠다. */
+  background-color: var(--sign);
+  background-image:
+    linear-gradient(var(--sign-hi), var(--sign-hi)),
+    linear-gradient(var(--sign-lo1), var(--sign-lo1)),
+    linear-gradient(var(--sign-lo2), var(--sign-lo2));
+  background-position: top, bottom var(--u), bottom;
+  background-size: 100% var(--u), 100% var(--u), 100% var(--u);
+  background-repeat: no-repeat;
+  box-shadow: 0 var(--u) 0 rgb(0 0 0 / 0.12);
 }
 
 .brand {
@@ -567,8 +627,12 @@ code {
   letter-spacing: 0;
   color: var(--sign-ink);
   text-decoration: none;
-  /* 픽셀 게임 로고의 각진 외곽선 */
-  text-shadow: 2px 2px 0 rgb(0 0 0 / 0.35);
+  /* 아래로 도트 두 칸을 단계로 깐다. blur 는 0 이다.
+     글자 자체에 그라데이션(background-clip:text)을 넣어 봤지만 text-shadow 가
+     그 위를 덮어 두 톤이 보이지 않는다 — 단계는 그림자 쪽으로만 만든다. */
+  text-shadow:
+    0 3px 0 var(--sign-lo1),
+    0 6px 0 var(--sign-lo2);
 }
 .brand span { color: var(--sign-accent); }
 /* 브랜드 앞 화살표. .brand 는 판(.px)을 두르지 않으므로 ::before 를 그대로 쓴다 */
@@ -635,6 +699,11 @@ h1 {
   letter-spacing: 0;
   color: var(--ink);
   margin: 0 0 0.75rem;
+  /* 글자 아래로 도트 두 칸을 단계로 깐다. blur 를 0 으로 둬야 도트가 산다 —
+     흐린 그림자가 한 픽셀이라도 끼면 픽셀 아트가 아니라 웹 버튼이 된다. */
+  text-shadow:
+    0 3px 0 var(--head-lo1),
+    0 6px 0 var(--head-lo2);
 }
 
 /* 안내 문단은 픽셀 폰트를 쓰지 않는다 — 두 줄 이상 읽는 글이다. */
