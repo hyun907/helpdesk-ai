@@ -197,44 +197,79 @@ def resolve(rows):
 
 
 # ── 배치 ──────────────────────────────────────────────────────────
-# (이름, 왼쪽 px, 위 px, 도트 크기)
-# 무리지어 둔다 — 나무 밑에 덤불, 그 옆에 꽃. 규칙적으로 흩뿌리면
-# '반복되는 무늬'로 읽히고 자연스럽지 않다.
-# 타일이 세로로 반복되므로 위아래 경계를 넘으면 안 된다.
-W, H = 176, 2600
+# 좌우에 띠 두 개를 세워 두니 '반복되는 기둥'으로 읽혔다. 이제 배경 전체에
+# 흩뿌리고, 본문 판이 그 위에 얹힌다 — 판에 가려지는 것은 자연스러운 가림이다.
+#
+# 위치는 고정 시드로 뽑는다. 손으로 찍으면 규칙이 배어 나오고, 시드를 안 박으면
+# 돌릴 때마다 그림이 달라져 diff 가 무의미해진다.
+#
+# 이음매를 없애려고 가장자리를 넘는 오브젝트는 반대편에도 한 번 더 그린다.
+# 그러지 않으려고 오브젝트를 안쪽에만 두면 타일 경계마다 빈 줄이 생겨
+# 격자무늬로 보인다.
+import random
 
-LEFT = [
-    ('tree',    18,  40, 4), ('bush',    72, 132, 3), ('flower',   4, 150, 3),
-    ('sprout', 108, 168, 3),
-    ('stone',   96, 330, 3), ('flower', 132, 344, 2),
-    ('mushroom', 20, 470, 3), ('sprout',  60, 500, 2),
-    ('tree2',   84, 610, 4), ('bush',    24, 700, 3), ('flower',  70, 726, 3),
-    ('log',      6, 900, 3), ('sprout',  96, 918, 2),
-    ('flower',  44, 1060, 3), ('flower', 74, 1078, 2), ('stone',   6, 1090, 2),
-    ('tree',    92, 1200, 3), ('mushroom', 40, 1268, 2),
-    ('bush',    16, 1430, 4), ('sprout',  86, 1470, 3),
-    ('stone',   104, 1600, 4), ('flower',  30, 1622, 3),
-    ('tree2',   14, 1740, 4), ('bush',    96, 1846, 3), ('flower', 60, 1870, 2),
-    ('mushroom', 108, 2010, 3), ('sprout',  20, 2040, 3),
-    ('log',     52, 2170, 4), ('flower',  10, 2210, 2),
-    ('tree',    88, 2320, 4), ('bush',    18, 2420, 3), ('flower', 66, 2444, 3),
+W, H = 1600, 1500
+SEED = 20260821
+
+# (이름, 도트 크기, 뽑을 개수) — 큰 것은 드물게, 작은 것은 흔하게
+POPULATION = [
+    ('tree',     4, 5), ('tree',     3, 4),
+    ('tree2',    4, 4), ('tree2',    3, 4),
+    ('bush',     4, 6), ('bush',     3, 7),
+    ('log',      3, 3), ('log',      2, 2),
+    ('stone',    3, 5), ('stone',    2, 5),
+    ('mushroom', 3, 5), ('mushroom', 2, 6),
+    ('flower',   3, 9), ('flower',   2, 11),
+    ('sprout',   3, 8), ('sprout',   2, 10),
 ]
-RIGHT = [
-    ('bush',    28,  50, 4), ('flower',  96,  74, 3), ('sprout', 132,  96, 2),
-    ('tree',    86, 180, 4), ('mushroom', 30, 262, 3),
-    ('flower',  10, 420, 3), ('stone',   64, 436, 3),
-    ('tree2',   20, 540, 3), ('sprout', 104, 604, 3), ('flower', 136, 628, 2),
-    ('log',     72, 760, 3), ('bush',     8, 790, 3),
-    ('mushroom', 116, 930, 4), ('flower',  36, 962, 3),
-    ('tree',    16, 1080, 4), ('bush',    88, 1176, 4), ('sprout', 140, 1200, 2),
-    ('stone',   28, 1330, 3), ('flower',  92, 1348, 2),
-    ('tree2',  100, 1450, 4), ('mushroom', 22, 1520, 3), ('flower', 62, 1548, 3),
-    ('sprout',  10, 1700, 3), ('log',     70, 1720, 4),
-    ('bush',   112, 1880, 3), ('flower',  22, 1904, 3),
-    ('tree',    46, 2010, 4), ('stone',  120, 2100, 3),
-    ('mushroom', 14, 2240, 4), ('sprout',  80, 2280, 3),
-    ('bush',    96, 2400, 4), ('flower',  30, 2430, 3), ('flower', 60, 2452, 2),
-]
+GAP = 14          # 오브젝트끼리 최소 간격(px)
+CLUSTER = 0.45    # 큰 것을 놓은 뒤 곁에 작은 것을 붙일 확률
+
+
+def _size(name, cell):
+    rows = SPRITES[name]
+    return len(rows[0]) * cell, len(rows) * cell
+
+
+def _fits(placed, x, y, w, h):
+    for (px, py, pw, ph) in placed:
+        # 타일이 반복되므로 겹침도 순환해서 본다
+        for ox in (-W, 0, W):
+            for oy in (-H, 0, H):
+                if (x < px + pw + GAP + ox and x + w + GAP > px + ox and
+                        y < py + ph + GAP + oy and y + h + GAP > py + oy):
+                    return False
+    return True
+
+
+def scatter():
+    rng = random.Random(SEED)
+    want = []
+    for name, cell, n in POPULATION:
+        want += [(name, cell)] * n
+    # 큰 것부터 놓아야 자리를 잡는다
+    want.sort(key=lambda t: -_size(*t)[0] * _size(*t)[1])
+
+    placed, out = [], []
+    for name, cell in want:
+        w, h = _size(name, cell)
+        for _ in range(400):
+            x, y = rng.randrange(0, W), rng.randrange(0, H)
+            if _fits(placed, x, y, w, h):
+                placed.append((x, y, w, h)); out.append((name, x, y, cell))
+                break
+        # 큰 것 곁에 작은 것을 붙여 무리를 만든다
+        if out and out[-1][0] == name and w >= 40 and rng.random() < CLUSTER:
+            comp, ccell = rng.choice([('bush', 2), ('flower', 2), ('sprout', 2), ('mushroom', 2)])
+            cw, ch = _size(comp, ccell)
+            for _ in range(60):
+                cx = x + rng.randint(-w, w)
+                cy = y + h - ch + rng.randint(-6, 10)
+                cx %= W; cy %= H
+                if _fits(placed, cx, cy, cw, ch):
+                    placed.append((cx, cy, cw, ch)); out.append((comp, cx, cy, ccell))
+                    break
+    return out
 
 
 def merge(rects):
@@ -259,14 +294,19 @@ def build(items, is_night):
     rects = []
     for name, px, py, cell in items:
         rows = SPRITES[name]
-        sw, sh = len(rows[0]) * cell, len(rows) * cell
-        assert 0 <= px and px + sw <= W, f'{name} 가로가 띠({W}px)를 벗어난다'
-        assert 0 <= py and py + sh <= H, f'{name} 세로 반복 경계({H}px)를 넘는다'
-        px_map = resolve(rows)
-        for (x, y), col in px_map.items():
-            if is_night:
-                col = night(col)
-            rects.append((px + x * cell, py + y * cell, cell, cell, col))
+        sw, sh = _size(name, cell)
+        pixels = resolve(rows)
+        # 가장자리를 넘으면 반대편에도 그린다 → 타일 이음매가 사라진다
+        offsets = [(0, 0)]
+        if px + sw > W: offsets.append((-W, 0))
+        if py + sh > H: offsets.append((0, -H))
+        if px + sw > W and py + sh > H: offsets.append((-W, -H))
+        for ox, oy in offsets:
+            for (x, y), col in pixels.items():
+                rects.append((px + ox + x * cell, py + oy + y * cell, cell, cell,
+                              night(col) if is_night else col))
+    # 타일 밖으로 나간 조각은 버린다
+    rects = [r for r in rects if r[0] + r[2] > 0 and r[1] + r[3] > 0 and r[0] < W and r[1] < H]
     body = "".join(f"<rect x='{x}' y='{y}' width='{w}' height='{h}' fill='{c}'/>"
                    for x, y, w, h, c in merge(rects))
     return (f"<svg xmlns='http://www.w3.org/2000/svg' width='{W}' height='{H}' "
@@ -275,10 +315,11 @@ def build(items, is_night):
 
 if __name__ == '__main__':
     import pathlib
+    items = scatter()
     out = pathlib.Path(__file__).resolve().parent.parent / 'public' / 'scenery'
     out.mkdir(parents=True, exist_ok=True)
-    for tag, items in (('left', LEFT), ('right', RIGHT)):
-        for mode, is_night in (('day', False), ('night', True)):
-            f = out / f'{tag}-{mode}.svg'
-            f.write_text(build(items, is_night), encoding='utf-8')
-            print(f'  {f.name}  {len(f.read_text())//1024}KB  오브젝트 {len(items)}개')
+    for mode, is_night in (('day', False), ('night', True)):
+        f = out / f'field-{mode}.svg'
+        f.write_text(build(items, is_night), encoding='utf-8')
+        print(f'  {f.name}  {len(f.read_text())//1024}KB')
+    print(f'  오브젝트 {len(items)}개 · 타일 {W}x{H}')
