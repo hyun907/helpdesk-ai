@@ -104,7 +104,12 @@ const items = docs
   .doc-title {
     font-family: var(--font-display);
     font-size: 24px; line-height: 32px; letter-spacing: 0; font-weight: 700;
-    color: var(--ink);
+    /* 24px Bold = 대형 텍스트. 두 톤 모두 3:1 을 넘는다. */
+    color: transparent;
+    background-image: linear-gradient(var(--head-hi) 0 54%, var(--head-lo) 54% 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    filter: drop-shadow(0 3px 0 var(--head-sh1));
   }
   .doc-title::before { content: '▤ '; color: var(--wood); }
 

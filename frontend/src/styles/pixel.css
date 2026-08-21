@@ -81,7 +81,7 @@
   --wood-hi:   #d8b384;   /* 나무 하이라이트 */
 
   --ink:       #4a3728;   /* 본문 글자 — 크림 위 10.35:1 */
-  --ink-soft:  #7a6248;   /* 보조 글자 — 크림 위 5.27:1 */
+  --ink-soft:  #634e35;   /* 램프 최하단에서도 4.8:1 — 4.51 은 여유가 없다 */
   --ink-grass: #5f5340;   /* 잔디 위 보조 글자 — 5.55:1 */
 
   --rose:      #eb96ab;   /* 주 강조 — 채움 */
@@ -130,8 +130,12 @@
 
      섞는 비율을 키우면 단계가 도드라지는 대신 글자가 앉는 바닥이 얼룩진다.
      띠는 도트 한 칸(--px-u)씩이고 안쪽 여백 안에 들어가므로 본문에 닿지 않는다. */
-  --head-lo1: #a08a72;
-  --head-lo2: #c9b79c;
+  /* 제목 글자를 두 톤으로 나눈다(레퍼런스 로고처럼 위가 밝고 아래가 진하다).
+     36px Bold = WCAG 대형 텍스트라 3:1 기준 — 위 6.58:1 · 아래 10.35:1 로 여유 있다. */
+  --head-hi:  #6b5340;
+  --head-lo:  #4a3728;
+  --head-sh1: #b9a68c;
+  --head-sh2: #d6c7ae;
 
   --tint: #ffffff;    /* 위쪽 밝은 단계 */
   --shade: #7a5535;   /* 아래쪽 어두운 단계 — 따뜻한 나무 그늘 */
@@ -174,11 +178,11 @@
     --wood-hi:   #c9ab84;
 
     --ink:       #efe4cf;   /* 패널 위 7.58:1 */
-    --ink-soft:  #c2b6a0;   /* 패널 위 4.77:1 */
+    --ink-soft:  #d2c8b4;   /* 램프 최상단에서도 4.5:1 이상 */
     --ink-grass: #d8cdb8;
 
-    --rose:      #d9819a;
-    --rose-2:    #e695ac;
+    --rose:      #e79bb0;
+    --rose-2:    #eda3b7;
     --rose-deep: #f5a8bc;   /* 패널 위 5.10:1 */
     --mint:      #8fc7b6;
     --sky:       #8fb9c9;
@@ -186,8 +190,8 @@
     --mark:      #6b5a2a;   /* 어두운 금색 — 그 위에 밝은 본문이 올라간다 */
     --berry:     #b295c4;
     --danger:    #ff9c8f;   /* 패널 위 4.73:1 */
-    --danger-fill:   #d4816f;   /* 그 위의 --on-fill 4.98:1 */
-    --danger-fill-2: #e5a495;
+    --danger-fill:   #eda99a;   /* 그 위의 --on-fill 4.98:1 */
+    --danger-fill-2: #f3b8ab;
 
     --hover-fill: #3d4759;      /* 본문 7.43:1 · 보조 4.68:1 */
 
@@ -203,8 +207,10 @@
     --sign-lo2:    #2a231a;
 
 
-    --head-lo1: #7d6f5c;
-    --head-lo2: #574f45;
+    --head-hi:  #cbbda6;   /* 5.17:1 */
+    --head-lo:  #efe4cf;   /* 7.58:1 */
+    --head-sh1: #6b6153;
+    --head-sh2: #4d463c;
 
     --tint: #9db3d2;
     --shade: #10151d;
@@ -273,12 +279,20 @@
   --px-bd: var(--wood);
   --_c1: var(--px-u);
   --_c2: calc(var(--px-u) * 2);
-  /* 단계 음영 3칸. 판 색이 바뀌면 따라 바뀐다. */
-  --_hi:  color-mix(in srgb, var(--px-bg) 88%, var(--tint));
-  --_lo1: color-mix(in srgb, var(--px-bg) 93%, var(--shade));
-  --_lo2: color-mix(in srgb, var(--px-bg) 85%, var(--shade));
+  /* 판 전체를 위에서 아래로 5단계로 칠한다. 판 색이 바뀌면 따라 바뀐다.
+     가장자리에만 띠를 두면 단계가 눈에 안 띈다 — 면 전체가 단계로 나뉘어야
+     레퍼런스처럼 '도트로 칠한 그라데이션'으로 읽힌다. */
+  --_s1: color-mix(in srgb, var(--px-bg) 88%, var(--tint));
+  --_s2: var(--px-bg);
+  --_s3: color-mix(in srgb, var(--px-bg) 94%, var(--shade));
+  --_s4: color-mix(in srgb, var(--px-bg) 87%, var(--shade));
+  --_s5: color-mix(in srgb, var(--px-bg) 79%, var(--shade));
   border: 0;
   border-radius: 0;
+  /* 판은 전부 ::after 가 그린다. 요소 자신의 배경은 비워 둔다 —
+     button 은 UA 기본 배경(buttonface)을 갖고 있어서, 지우지 않으면
+     ::after 뒤에 회색 판이 한 겹 숨어 있게 된다. */
+  background-color: transparent;
 }
 
 :where(
@@ -312,22 +326,31 @@
     linear-gradient(var(--px-bd), var(--px-bd)),
     linear-gradient(var(--px-bd), var(--px-bd)),
     linear-gradient(var(--px-bd), var(--px-bd)),
-    /* 단계 음영 — 위 한 칸 밝게, 아래 두 칸 단계적으로 어둡게,
-       그 사이에 디더링 한 줄(체커)로 두 색을 잇는다 */
-    linear-gradient(var(--_hi), var(--_hi)),
-    repeating-conic-gradient(var(--_lo1) 0 25%, transparent 0 50%),
-    linear-gradient(var(--_lo1), var(--_lo1)),
-    linear-gradient(var(--_lo2), var(--_lo2));
+    /* 경계마다 디더링(체커) 한 띠 — 두 단계가 맞닿는 자리를 도트로 섞는다 */
+    repeating-conic-gradient(var(--_s2) 0 25%, transparent 0 50%),
+    repeating-conic-gradient(var(--_s3) 0 25%, transparent 0 50%),
+    repeating-conic-gradient(var(--_s4) 0 25%, transparent 0 50%),
+    repeating-conic-gradient(var(--_s5) 0 25%, transparent 0 50%),
+    /* 그 아래 깔리는 5단계 램프. 색이 번지지 않게 정지점을 겹쳐 둔다 —
+       linear-gradient 는 같은 위치에 두 색을 놓으면 보간 없이 뚝 끊긴다. */
+    linear-gradient(
+      var(--_s1) 0 12%,
+      var(--_s2) 12% 38%,
+      var(--_s3) 38% 62%,
+      var(--_s4) 62% 84%,
+      var(--_s5) 84% 100%
+    );
   background-position:
     left var(--_c1) top var(--_c1),
     right var(--_c1) top var(--_c1),
     left var(--_c1) bottom var(--_c1),
     right var(--_c1) bottom var(--_c1),
     top, bottom, left, right,
-    left var(--_c1) top var(--_c1),
-    left var(--_c1) bottom calc(var(--_c1) * 3),
-    left var(--_c1) bottom var(--_c2),
-    left var(--_c1) bottom var(--_c1);
+    left var(--_c1) top 12%,
+    left var(--_c1) top 38%,
+    left var(--_c1) top 62%,
+    left var(--_c1) top 84%,
+    left top;
   background-size:
     var(--_c1) var(--_c1),
     var(--_c1) var(--_c1),
@@ -335,14 +358,16 @@
     var(--_c1) var(--_c1),
     100% var(--_c1), 100% var(--_c1),
     var(--_c1) 100%, var(--_c1) 100%,
-    calc(100% - var(--_c2)) var(--_c1),
     var(--_c2) var(--_c2),
-    calc(100% - var(--_c2)) var(--_c1),
-    calc(100% - var(--_c2)) var(--_c1);
+    var(--_c2) var(--_c2),
+    var(--_c2) var(--_c2),
+    var(--_c2) var(--_c2),
+    100% 100%;
   background-repeat:
     no-repeat, no-repeat, no-repeat, no-repeat,
     no-repeat, no-repeat, no-repeat, no-repeat,
-    no-repeat, repeat-x, no-repeat, no-repeat;
+    repeat-x, repeat-x, repeat-x, repeat-x,
+    no-repeat;
   background-color: var(--px-bg);
   clip-path: polygon(
     var(--_c2) 0, calc(100% - var(--_c2)) 0,
@@ -409,7 +434,8 @@
 }
 
 /* ── 눌리는 버튼 ──
-   위 한 줄은 밝게, 아래 한 줄은 어둡게 깔아 두께를 만든다.
+   명암은 판과 같은 5단계 램프를 그대로 쓴다(위 규칙). 버튼 전용 배경을 따로 두면
+   판과 톤이 어긋난다. 여기서는 '눌리는 감각'만 얹는다.
    누르면 도트 한 칸만큼 내려간다. 전환은 steps(1) — 부드럽게 밀리면 도트가 죽는다.
    채움색은 페이지 쪽에서 정한다. 여기서 정해 두면 :where() 밖 규칙과 싸운다. */
 :where(
@@ -424,55 +450,6 @@
   transition: transform 60ms steps(1), background-color 60ms steps(1);
 }
 
-:where(
-  .px-btn,
-  .chat .composer button,
-  .chat button.ghost,
-  .inspector button,
-  .queue .actions button,
-  .queue button.ghost
-)::after {
-  background-image:
-    linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--px-bd), var(--px-bd)),
-    linear-gradient(var(--px-bd), var(--px-bd)),
-    /* 판과 같은 단계 체계를 쓴다. 반투명 베벨을 쓰면 채움색이 바뀔 때마다
-       명암이 제멋대로 달라져 버튼끼리 톤이 어긋난다. */
-    linear-gradient(var(--_hi), var(--_hi)),
-    repeating-conic-gradient(var(--_lo1) 0 25%, transparent 0 50%),
-    linear-gradient(var(--_lo1), var(--_lo1)),
-    linear-gradient(var(--_lo2), var(--_lo2));
-  background-position:
-    left var(--_c1) top var(--_c1),
-    right var(--_c1) top var(--_c1),
-    left var(--_c1) bottom var(--_c1),
-    right var(--_c1) bottom var(--_c1),
-    top, bottom, left, right,
-    left var(--_c1) top var(--_c1),
-    left var(--_c1) bottom calc(var(--_c1) * 3),
-    left var(--_c1) bottom var(--_c2),
-    left var(--_c1) bottom var(--_c1);
-  background-size:
-    var(--_c1) var(--_c1),
-    var(--_c1) var(--_c1),
-    var(--_c1) var(--_c1),
-    var(--_c1) var(--_c1),
-    100% var(--_c1), 100% var(--_c1),
-    var(--_c1) 100%, var(--_c1) 100%,
-    calc(100% - var(--_c2)) var(--_c1),
-    var(--_c2) var(--_c2),
-    calc(100% - var(--_c2)) var(--_c1),
-    calc(100% - var(--_c2)) var(--_c1);
-  background-repeat:
-    no-repeat, no-repeat, no-repeat, no-repeat,
-    no-repeat, no-repeat, no-repeat, no-repeat,
-    no-repeat, repeat-x, no-repeat, no-repeat;
-}
 
 :where(
   .px-btn,
@@ -625,14 +602,14 @@ code {
   line-height: 32px;
   font-weight: 700;
   letter-spacing: 0;
-  color: var(--sign-ink);
+  color: transparent;
+  background-image: linear-gradient(var(--sign-ink) 0 54%, var(--sign-deco) 54% 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
   text-decoration: none;
-  /* 아래로 도트 두 칸을 단계로 깐다. blur 는 0 이다.
-     글자 자체에 그라데이션(background-clip:text)을 넣어 봤지만 text-shadow 가
-     그 위를 덮어 두 톤이 보이지 않는다 — 단계는 그림자 쪽으로만 만든다. */
-  text-shadow:
-    0 3px 0 var(--sign-lo1),
-    0 6px 0 var(--sign-lo2);
+  filter:
+    drop-shadow(0 3px 0 var(--sign-lo1))
+    drop-shadow(0 3px 0 var(--sign-lo2));
 }
 .brand span { color: var(--sign-accent); }
 /* 브랜드 앞 화살표. .brand 는 판(.px)을 두르지 않으므로 ::before 를 그대로 쓴다 */
@@ -697,13 +674,19 @@ h1 {
   line-height: 48px;
   font-weight: 700;
   letter-spacing: 0;
-  color: var(--ink);
   margin: 0 0 0.75rem;
-  /* 글자 아래로 도트 두 칸을 단계로 깐다. blur 를 0 으로 둬야 도트가 산다 —
-     흐린 그림자가 한 픽셀이라도 끼면 픽셀 아트가 아니라 웹 버튼이 된다. */
-  text-shadow:
-    0 3px 0 var(--head-lo1),
-    0 6px 0 var(--head-lo2);
+  /* 글자 자체를 두 톤으로 자른다 — 위가 밝고 아래가 진하다.
+     정지점을 같은 위치에 겹쳐 두어 보간 없이 뚝 끊는다. */
+  color: transparent;
+  background-image: linear-gradient(var(--head-hi) 0 54%, var(--head-lo) 54% 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  /* 그림자는 text-shadow 가 아니라 filter 다.
+     text-shadow 는 배경(=글자 색)보다 위에 그려져 두 톤을 덮어 버린다.
+     drop-shadow 는 '잘린 결과'에 걸리므로 두 톤이 살아남는다. blur 는 0. */
+  filter:
+    drop-shadow(0 3px 0 var(--head-sh1))
+    drop-shadow(0 3px 0 var(--head-sh2));
 }
 
 /* 안내 문단은 픽셀 폰트를 쓰지 않는다 — 두 줄 이상 읽는 글이다. */
