@@ -1,10 +1,23 @@
 ---
+import '../styles/pixel.css';
+
 interface Props {
   title: string;
   description?: string;
 }
 const { title, description } = Astro.props;
 const path = Astro.url.pathname;
+
+/** 메뉴 한 칸.
+ *  아이콘은 이모지가 아니라 도형 글리프를 쓴다 — 이모지는 OS마다 모양이 다르고
+ *  컬러 이모지 폰트로 떨어져 도트 느낌이 깨진다.
+ *  여기 쓰는 네 글자는 Galmuri11 이 직접 가진 글리프다(⚑ ⌕ ✓ 등은 없어서 못 쓴다). */
+const nav = [
+  { href: '/', label: '상담', icon: '♡', match: (p: string) => p === '/' },
+  { href: '/docs', label: '운영 정책', icon: '▤', match: (p: string) => p.startsWith('/docs') },
+  { href: '/admin', label: '검색 점검', icon: '◈', match: (p: string) => p === '/admin' },
+  { href: '/admin/tickets', label: '승인 대기', icon: '★', match: (p: string) => p.startsWith('/admin/tickets') },
+];
 ---
 
 <!doctype html>
@@ -14,114 +27,61 @@ const path = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} · HelpDesk AI</title>
     {description && <meta name="description" content={description} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/* 잔디 배경색을 브라우저 UI(주소창·오버스크롤)에도 물려 준다 */}
+    <meta name="theme-color" content="#cfe6a8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#2b3446" media="(prefers-color-scheme: dark)" />
+    {/* 픽셀 폰트는 첫 화면의 메뉴·제목에 바로 쓰인다. 늦게 오면 글자가 한 번 튄다. */}
+    <link rel="preload" href="/fonts/Galmuri11.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body>
     <header class="site-header">
       <a class="brand" href="/">HelpDesk<span>AI</span></a>
-      <nav>
-        <a href="/" class:list={[{ active: path === '/' }]}>상담</a>
-        <a href="/docs" class:list={[{ active: path.startsWith('/docs') }]}>운영 정책</a>
-        <a href="/admin" class:list={[{ active: path === '/admin' }]}>검색 점검</a>
-        <a href="/admin/tickets" class:list={[{ active: path.startsWith('/admin/tickets') }]}>승인 대기</a>
+      <nav aria-label="주요 메뉴">
+        {nav.map((item) => (
+          <a href={item.href} class:list={['px', { active: item.match(path) }]}>
+            <span class="nav-icon" aria-hidden="true">{item.icon}</span>{item.label}
+          </a>
+        ))}
       </nav>
     </header>
 
-    <main><slot /></main>
+    <main>
+      <div class="page-sheet px"><slot /></div>
+    </main>
 
     <footer class="site-footer">
-      정책 원문은 <code>src/main/resources/docs/</code> 의 파일을 그대로 렌더링합니다 —
-      RAG가 색인하는 파일과 같은 원본입니다.
+      <div class="px sign">
+        <span class="sign-pin" aria-hidden="true"></span>
+        정책 원문은 <code>src/main/resources/docs/</code> 의 파일을 그대로 렌더링합니다 —
+        RAG가 색인하는 파일과 같은 원본입니다.
+      </div>
     </footer>
   </body>
 </html>
 
 <style is:global>
-  :root {
-    --bg: #ffffff;
-    --bg-soft: #f7f8fa;
-    --bg-inset: #eef0f4;
-    --fg: #1b1f24;
-    --fg-muted: #5c6570;
-    --border: #dfe3e8;
-    --accent: #2f6feb;
-    --accent-soft: #e8f0fe;
-    --mark: #fff3c4;
-    --radius: 10px;
-    --maxw: 860px;
+  /* 메뉴 아이콘 — 글자보다 한 톤 옅게 둬서 라벨을 가리지 않는다 */
+  .site-header nav a .nav-icon {
+    margin-right: 0.4em;
+    color: var(--wood);
   }
+  .site-header nav a.active .nav-icon { color: var(--on-fill); }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #14171a;
-      --bg-soft: #1b1f23;
-      --bg-inset: #22272c;
-      --fg: #e6e9ec;
-      --fg-muted: #9aa4ae;
-      --border: #2e353c;
-      --accent: #6ea8ff;
-      --accent-soft: #1d2b45;
-      --mark: #4a3f12;
-    }
+  /* 꼬리말 = 밭에 꽂아 둔 작은 나무 팻말 */
+  .site-footer .sign {
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
+    padding: 0.9rem 1.1rem 0.9rem 2.2rem;
   }
-
-  * { box-sizing: border-box; }
-
-  /* scroll-behavior: smooth 는 두지 않는다.
-     해시가 붙은 URL 로 처음 진입할 때(= 출처 링크로 들어오는 경로) 브라우저가
-     레이아웃이 잡히기 전에 스크롤을 시작해 목표 조항을 지나쳐 버린다.
-     즉시 점프가 sticky 헤더 보정(scroll-padding-top)과도 정확히 맞는다. */
-  html { scroll-padding-top: 5.5rem; }
-
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
-      Pretendard, 'Noto Sans KR', 'Malgun Gothic', sans-serif;
-    font-size: 16px;
-    line-height: 1.75;
-    word-break: keep-all;      /* 한글은 어절 단위로 끊는다 */
-    overflow-wrap: break-word;
-  }
-
-  /* ── 헤더 ───────────────────────────────────────── */
-  .site-header {
-    position: sticky; top: 0; z-index: 10;
-    display: flex; align-items: center; gap: 2rem;
-    padding: 0.85rem 1.5rem;
-    background: color-mix(in srgb, var(--bg) 85%, transparent);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border);
-  }
-  .brand {
-    font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em;
-    color: var(--fg); text-decoration: none;
-  }
-  .brand span { color: var(--accent); }
-  .site-header nav { display: flex; gap: 1.25rem; }
-  .site-header nav a {
-    color: var(--fg-muted); text-decoration: none; font-size: 0.92rem;
-    padding-bottom: 2px; border-bottom: 2px solid transparent;
-  }
-  .site-header nav a:hover { color: var(--fg); }
-  .site-header nav a.active { color: var(--fg); border-bottom-color: var(--accent); }
-
-  main { max-width: var(--maxw); margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
-
-  .site-footer {
-    max-width: var(--maxw); margin: 0 auto;
-    padding: 1.5rem 1.5rem 3rem;
-    border-top: 1px solid var(--border);
-    color: var(--fg-muted); font-size: 0.85rem; line-height: 1.6;
-  }
-
-  a { color: var(--accent); }
-
-  code {
-    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
-    font-size: 0.88em;
-    background: var(--bg-inset);
-    padding: 0.15em 0.4em;
-    border-radius: 4px;
+  /* 팻말을 고정한 못 한 알 */
+  .site-footer .sign-pin {
+    position: absolute;
+    left: 0.9rem;
+    top: 1.15rem;
+    width: var(--u);
+    height: var(--u);
+    background: var(--rose);
+    box-shadow: 0 0 0 var(--u) var(--wood-2);
   }
 </style>

@@ -1,0 +1,616 @@
+/* ============================================================================
+   HelpDesk AI — 아기자기 픽셀 도트 디자인 시스템
+   ----------------------------------------------------------------------------
+   원칙 세 가지. 이 파일을 고칠 때 이 순서대로 지킨다.
+
+   1) 가독성이 먼저다.
+      본문 장문(정책 원문·채팅 답변)은 픽셀 폰트를 쓰지 않는다. 기존 고딕 스택
+      그대로 16px/1.75 로 읽는다. 픽셀 폰트는 '화면 장식'(브랜드·메뉴·제목·버튼·
+      배지)에만 붙인다. 글자색은 전부 WCAG AA(본문 4.5:1, 굵은 테두리 3:1)를
+      넘도록 골랐다 — 색을 바꾸면 대비를 다시 재라.
+
+   2) 픽셀 폰트는 12px 의 배수에서만 쓴다.
+      Galmuri11 은 em 박스가 12도트다(upem 1200 / 1도트 100units). 12·24·36·48px
+      에서만 도트가 화면 픽셀과 1:1 로 맞는다. 14px·18px 로 두면 안티에일리어싱이
+      끼어 흐려진다 — 힌팅 테이블이 없어서 브라우저가 보정해 주지 못한다.
+
+   3) 곡선을 쓰지 않는다.
+      border-radius 대신 .px 의 계단형 모서리를 쓴다. 그림자도 흐리지 않는다.
+      기울어진 선과 blur 가 들어오는 순간 도트 느낌이 무너진다.
+   ========================================================================= */
+
+/* ── 폰트 ────────────────────────────────────────────────────────────────
+   Galmuri11 (갈무리11) · SIL OFL 1.1 · (c) 2019–2025 Lee Minseo
+   현대 한글 11,172자를 전부 포함한다 — 한글이 깨질 일이 없다.
+   자세한 내용은 public/fonts/README.txt 참고. */
+@font-face {
+  font-family: 'Galmuri11';
+  src: url('/fonts/Galmuri11.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  /* swap — 폰트가 늦게 와도 글자는 먼저 보인다. 상담 화면이 빈 채로 멈추지 않는다. */
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Galmuri11';
+  src: url('/fonts/Galmuri11-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ── 픽셀 단위 ──
+     모든 테두리·모서리·간격의 기준. 이 값이 도트 한 칸이다. */
+  --u: 4px;
+
+  /* ── 낮 팔레트 (레퍼런스: 잔디밭 + 나무 간판 + 크림 양피지) ── */
+  --grass:     #cfe6a8;   /* 페이지 바탕 — 잔디 */
+  --grass-2:   #bfe09b;   /* 잔디 무늬 */
+  --cream:     #fdf5e2;   /* 패널 — 글자가 앉는 곳 */
+  --cream-2:   #f6e7c6;   /* 패널 안쪽 한 겹 */
+  --cream-3:   #eddbb4;   /* 더 안쪽 (표 머리·트랙) */
+  --wood:      #8a6440;   /* 테두리 — 진한 나무 */
+  --wood-2:    #b98d5f;   /* 테두리 보조 */
+  --wood-hi:   #d8b384;   /* 나무 하이라이트 */
+
+  --ink:       #4a3728;   /* 본문 글자 — 크림 위 10.35:1 */
+  --ink-soft:  #7a6248;   /* 보조 글자 — 크림 위 5.27:1 */
+  --ink-grass: #5f5340;   /* 잔디 위 보조 글자 — 5.55:1 */
+
+  --rose:      #eb96ab;   /* 주 강조 — 채움 */
+  --rose-2:    #f0a8ba;   /* 채움 hover */
+  --rose-deep: #b34a68;   /* 링크·포커스 — 크림 위 4.72:1 */
+  --mint:      #a8ddcd;
+  --sky:       #a9dfec;
+  --sun:       #f7d99a;   /* 파스텔 채움 — 그 위에는 --on-fill(진갈색)이 올라간다 */
+  --mark:      #f7d99a;   /* 형광펜(:target·강조) — 그 위에는 본문색이 올라간다.
+                             --sun 과 값이 같아 보이지만 역할이 반대라 분리해 둔다.
+                             밤에는 본문이 밝은 색이라 형광펜이 어두워져야 한다. */
+  --berry:     #d3b0e0;
+  --danger:    #b3372c;   /* 크림 위 5.53:1 */
+  --danger-fill:   #f0a79e;
+  --danger-fill-2: #f5bcb4;
+
+  /* hover 채움.
+     --sun 을 hover 에 쓰면 안 된다 — 밤에는 --sun 이 밝은 금색이라
+     그 위에 얹히는 본문색(밝은 잉크)이 1.9:1 까지 떨어진다.
+     hover 는 글자색을 그대로 두는 자리이므로, 글자색이 바뀌지 않아도
+     본문 4.5:1 이 유지되는 색을 따로 둔다. */
+  --hover-fill: #f7ecd0;   /* 본문 9.56:1 · 보조 4.87:1 */
+
+  /* 채워진 배지·버튼 위 글자. 파스텔 채움에는 흰색이 아니라 진갈색을 올린다
+     — 흰 글씨는 파스텔 위에서 3.5:1 밖에 안 나온다. */
+  --on-fill:   #42221c;
+
+  /* ── 머리말 나무 간판 ──
+     낮에는 밝은 나무, 밤에는 등불 아래 어두운 나무. --wood 를 그대로 쓰면
+     밤에 간판만 밝게 남아 화면이 뒤집힌 것처럼 보인다.
+     브랜드는 24px Bold = WCAG 대형 텍스트라 3:1 기준을 적용했다. */
+  --sign:        #8a6440;
+  --sign-edge:   #b98d5f;
+  --sign-ink:    #fdf5e2;   /* 4.86:1 */
+  --sign-accent: #f7c3d0;   /* 3.44:1 (대형 텍스트) */
+  --sign-deco:   #f7d99a;   /* 3.86:1 (장식) */
+
+  /* 버튼 입체감. 밤에는 흰 하이라이트를 약하게 — 그대로 두면 테두리처럼 튄다. */
+  --bevel-hi: rgb(255 255 255 / 0.45);
+  --bevel-lo: rgb(0 0 0 / 0.13);
+
+  /* ── 레거시 토큰 별칭 ──
+     페이지별 스타일이 아직 이 이름들을 쓴다. 새 팔레트로 갈아끼워
+     한 번에 색이 바뀌게 한다. 새 코드에서는 위쪽 이름을 직접 쓴다. */
+  --bg: var(--cream);
+  --bg-soft: var(--cream-2);
+  --bg-inset: var(--cream-3);
+  --fg: var(--ink);
+  --fg-muted: var(--ink-soft);
+  --border: var(--wood);
+  --accent: var(--rose-deep);
+  --accent-soft: var(--mint);
+  --radius: 0;            /* 둥근 모서리를 전부 무력화한다 */
+  --maxw: 880px;
+
+  /* 잔디 무늬 타일 (라이트) */
+  --grass-tile: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2764%27%20height%3D%2764%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20x%3D%2710%27%20y%3D%2718%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23a9d182%27%2F%3E%3Crect%20x%3D%276%27%20y%3D%2714%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23bfe09b%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23bfe09b%27%2F%3E%3Crect%20x%3D%2746%27%20y%3D%276%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23f3b9c7%27%2F%3E%3Crect%20x%3D%2742%27%20y%3D%2710%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23f3b9c7%27%2F%3E%3Crect%20x%3D%2750%27%20y%3D%2710%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23f3b9c7%27%2F%3E%3Crect%20x%3D%2746%27%20y%3D%2714%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23f3b9c7%27%2F%3E%3Crect%20x%3D%2746%27%20y%3D%2710%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23f7d99a%27%2F%3E%3Crect%20x%3D%2732%27%20y%3D%2748%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23a9d182%27%2F%3E%3Crect%20x%3D%2728%27%20y%3D%2744%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23bfe09b%27%2F%3E%3Crect%20x%3D%2736%27%20y%3D%2744%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23bfe09b%27%2F%3E%3Crect%20x%3D%2758%27%20y%3D%2752%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23bfe09b%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%2744%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23bfe09b%27%2F%3E%3Crect%20x%3D%2722%27%20y%3D%2730%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%23bfe09b%27%2F%3E%3C%2Fsvg%3E");
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* ── 밤 팔레트 ──
+       같은 마을의 밤. 잔디는 남색 밤하늘로, 양피지는 등불 켜진 나무 판으로. */
+    --grass:     #2b3446;
+    --grass-2:   #333d51;
+    --cream:     #3b4657;
+    --cream-2:   #333d4c;
+    --cream-3:   #2e3745;
+    --wood:      #b0926c;   /* 패널 위 3.26:1 · 배경 위 4.26:1 */
+    --wood-2:    #8a7355;
+    --wood-hi:   #c9ab84;
+
+    --ink:       #efe4cf;   /* 패널 위 7.58:1 */
+    --ink-soft:  #c2b6a0;   /* 패널 위 4.77:1 */
+    --ink-grass: #d8cdb8;
+
+    --rose:      #d9819a;
+    --rose-2:    #e695ac;
+    --rose-deep: #f5a8bc;   /* 패널 위 5.10:1 */
+    --mint:      #8fc7b6;
+    --sky:       #8fb9c9;
+    --sun:       #d8b45e;   /* 밝은 금색 — 그 위에 --on-fill(어두운 잉크)이 올라간다 */
+    --mark:      #6b5a2a;   /* 어두운 금색 — 그 위에 밝은 본문이 올라간다 */
+    --berry:     #b295c4;
+    --danger:    #ff9c8f;   /* 패널 위 4.73:1 */
+    --danger-fill:   #d4816f;   /* 그 위의 --on-fill 4.98:1 */
+    --danger-fill-2: #e5a495;
+
+    --hover-fill: #3d4759;      /* 본문 7.43:1 · 보조 4.68:1 */
+
+    --on-fill:   #1f2a35;
+
+    --sign:        #3f3527;
+    --sign-edge:   #6b5844;
+    --sign-ink:    #efe4cf;   /* 9.53:1 */
+    --sign-accent: #f7c3d0;   /* 7.81:1 */
+    --sign-deco:   #d8b45e;   /* 6.06:1 */
+
+    --bevel-hi: rgb(255 255 255 / 0.16);
+    --bevel-lo: rgb(0 0 0 / 0.22);
+
+    --grass-tile: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2764%27%20height%3D%2764%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20x%3D%2710%27%20y%3D%2718%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%233c4a5e%27%2F%3E%3Crect%20x%3D%276%27%20y%3D%2714%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%2344536a%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%2344536a%27%2F%3E%3Crect%20x%3D%2746%27%20y%3D%276%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2742%27%20y%3D%2710%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2750%27%20y%3D%2710%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2746%27%20y%3D%2714%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%235a4657%27%2F%3E%3Crect%20x%3D%2746%27%20y%3D%2710%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%236b5a44%27%2F%3E%3Crect%20x%3D%2732%27%20y%3D%2748%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%233c4a5e%27%2F%3E%3Crect%20x%3D%2728%27%20y%3D%2744%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%2344536a%27%2F%3E%3Crect%20x%3D%2736%27%20y%3D%2744%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%2344536a%27%2F%3E%3Crect%20x%3D%2758%27%20y%3D%2752%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%2344536a%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%2744%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%2344536a%27%2F%3E%3Crect%20x%3D%2722%27%20y%3D%2730%27%20width%3D%274%27%20height%3D%274%27%20fill%3D%27%2344536a%27%2F%3E%3C%2Fsvg%3E");
+
+    color-scheme: dark;
+  }
+}
+
+/* ========================================================================
+   .px — 픽셀 패널 프리미티브
+   ------------------------------------------------------------------------
+   계단식(2칸) 모서리와 두께가 일정한 테두리를 요소 하나로 만든다.
+   배경 레이어 8장(테두리 4변 + 모서리 계단 4칸) + clip-path 로 그린다.
+
+   왜 border-radius 가 아닌가 — 곡선이 한 군데라도 들어오면 도트 느낌이 깨진다.
+   왜 clip-path 를 가상요소에 거는가 — 요소 자체를 자르면 포커스 링(outline)까지
+   잘려 나가 키보드로 어디에 있는지 알 수 없게 된다. 배경만 자르고 요소는 남긴다.
+   스크롤되는 요소만 예외로 요소 자체를 자른다(CLIPPED 목록) — 그쪽은
+   가상요소가 내용과 함께 스크롤돼 버려서 이 방법을 쓸 수 없다.
+
+   선택자를 :where() 로 감싼다 → 명시도 0.
+   페이지별 스타일에서 --px-bg / --px-bd / --px-u 만 바꾸면 언제나 그쪽이 이긴다.
+
+   가상요소 배분 규칙 — 이걸 어기면 판이 사라진다:
+     ::after  판(배경·테두리). 절대배치라 문서 순서와 무관하다.
+     ::before 앞머리 아이콘(content: '◆ ' 같은 것). 페이지 쪽에서 자유롭게 쓴다.
+   판을 ::before 에 두면 아이콘 규칙의 content 가 판을 덮어써서 글리프 하나로 바뀐다.
+
+   주의: 가상요소는 :where() 바깥에 붙인다.
+   :where(.a::after) 는 무효 선택자이고, :where() 의 관용 파싱이 그걸 조용히
+   버려서 규칙 하나가 통째로 사라진다 — 화면에서는 '판이 안 그려지는' 걸로 보인다.
+   반드시 :where(.a)::after 로 쓴다.
+
+   주의: 인라인 요소(span·a)에 판을 입힐 땐 display:inline-block 을 함께 준다.
+   인라인 상자는 절대배치 자식의 컨테이닝 블록을 제대로 만들지 못해서
+   inset:0 이 엉뚱한 크기로 풀린다 — 화면에서는 판이 글자를 뚫고 나온다.
+
+   커스터마이즈:  --px-bg 채움색 · --px-bd 테두리색 · --px-u 도트 크기
+   ===================================================================== */
+
+/* 판을 입히는 요소 목록. 새 요소는 여기 한 줄만 추가하면 된다. */
+:where(
+  .px,
+  .chat .bubble,
+  .chat .chip,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector .notice,
+  .inspector .results li,
+  .inspector button,
+  .queue .notice,
+  .queue .tickets li,
+  .queue .actions button,
+  .queue button.ghost,
+  .queue .type,
+  .doc-list a,
+  .toc,
+  .prose blockquote,
+  .px-clip,
+  .chat .log
+) {
+  --px-u: var(--u);
+  --px-bg: var(--cream);
+  --px-bd: var(--wood);
+  --_c1: var(--px-u);
+  --_c2: calc(var(--px-u) * 2);
+  border: 0;
+  border-radius: 0;
+}
+
+:where(
+  .px,
+  .chat .bubble,
+  .chat .chip,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector .notice,
+  .inspector .results li,
+  .inspector button,
+  .queue .notice,
+  .queue .tickets li,
+  .queue .actions button,
+  .queue button.ghost,
+  .queue .type,
+  .doc-list a,
+  .toc,
+  .prose blockquote
+)::after,
+:where(
+  .px-clip,
+  .chat .log
+) {
+  background-image:
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd));
+  background-position:
+    left var(--_c1) top var(--_c1),
+    right var(--_c1) top var(--_c1),
+    left var(--_c1) bottom var(--_c1),
+    right var(--_c1) bottom var(--_c1),
+    top, bottom, left, right;
+  background-size:
+    var(--_c1) var(--_c1),
+    var(--_c1) var(--_c1),
+    var(--_c1) var(--_c1),
+    var(--_c1) var(--_c1),
+    100% var(--_c1), 100% var(--_c1),
+    var(--_c1) 100%, var(--_c1) 100%;
+  background-repeat: no-repeat;
+  background-color: var(--px-bg);
+  clip-path: polygon(
+    var(--_c2) 0, calc(100% - var(--_c2)) 0,
+    calc(100% - var(--_c2)) var(--_c1), calc(100% - var(--_c1)) var(--_c1),
+    calc(100% - var(--_c1)) var(--_c2), 100% var(--_c2),
+    100% calc(100% - var(--_c2)),
+    calc(100% - var(--_c1)) calc(100% - var(--_c2)),
+    calc(100% - var(--_c1)) calc(100% - var(--_c1)),
+    calc(100% - var(--_c2)) calc(100% - var(--_c1)),
+    calc(100% - var(--_c2)) 100%, var(--_c2) 100%,
+    var(--_c2) calc(100% - var(--_c1)), var(--_c1) calc(100% - var(--_c1)),
+    var(--_c1) calc(100% - var(--_c2)), 0 calc(100% - var(--_c2)),
+    0 var(--_c2), var(--_c1) var(--_c2), var(--_c1) var(--_c1), var(--_c2) var(--_c1)
+  );
+}
+
+:where(
+  .px,
+  .chat .bubble,
+  .chat .chip,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector .notice,
+  .inspector .results li,
+  .inspector button,
+  .queue .notice,
+  .queue .tickets li,
+  .queue .actions button,
+  .queue button.ghost,
+  .queue .type,
+  .doc-list a,
+  .toc,
+  .prose blockquote
+) {
+  position: relative;
+  /* 가상요소를 이 요소 안에 가둔다. isolate 가 없으면 z-index:-1 이
+     조상 배경 뒤로 빠져 판이 통째로 사라진다. */
+  isolation: isolate;
+}
+
+:where(
+  .px,
+  .chat .bubble,
+  .chat .chip,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector .notice,
+  .inspector .results li,
+  .inspector button,
+  .queue .notice,
+  .queue .tickets li,
+  .queue .actions button,
+  .queue button.ghost,
+  .queue .type,
+  .doc-list a,
+  .toc,
+  .prose blockquote
+)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ── 눌리는 버튼 ──
+   위 한 줄은 밝게, 아래 한 줄은 어둡게 깔아 두께를 만든다.
+   누르면 도트 한 칸만큼 내려간다. 전환은 steps(1) — 부드럽게 밀리면 도트가 죽는다.
+   채움색은 페이지 쪽에서 정한다. 여기서 정해 두면 :where() 밖 규칙과 싸운다. */
+:where(
+  .px-btn,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector button,
+  .queue .actions button,
+  .queue button.ghost
+) {
+  cursor: pointer;
+  transition: transform 60ms steps(1), background-color 60ms steps(1);
+}
+
+:where(
+  .px-btn,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector button,
+  .queue .actions button,
+  .queue button.ghost
+)::after {
+  background-image:
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--px-bd), var(--px-bd)),
+    linear-gradient(var(--bevel-hi), var(--bevel-hi)),
+    linear-gradient(var(--bevel-lo), var(--bevel-lo));
+  background-position:
+    left var(--_c1) top var(--_c1),
+    right var(--_c1) top var(--_c1),
+    left var(--_c1) bottom var(--_c1),
+    right var(--_c1) bottom var(--_c1),
+    top, bottom, left, right,
+    left var(--_c1) top var(--_c1),
+    left var(--_c1) bottom var(--_c1);
+  background-size:
+    var(--_c1) var(--_c1),
+    var(--_c1) var(--_c1),
+    var(--_c1) var(--_c1),
+    var(--_c1) var(--_c1),
+    100% var(--_c1), 100% var(--_c1),
+    var(--_c1) 100%, var(--_c1) 100%,
+    calc(100% - var(--_c2)) var(--_c1),
+    calc(100% - var(--_c2)) var(--_c1);
+}
+
+:where(
+  .px-btn,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector button,
+  .queue .actions button,
+  .queue button.ghost
+):active:not(:disabled) {
+  transform: translateY(var(--px-u));
+}
+
+:where(
+  .px-btn,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector button,
+  .queue .actions button,
+  .queue button.ghost
+):disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* .px-btn 만 기본 채움색을 갖는다 — 클래스로 직접 쓰는 경우 */
+.px-btn { --px-bg: var(--rose); --px-bd: var(--wood); color: var(--on-fill); }
+.px-btn:hover:not(:disabled) { --px-bg: var(--rose-2); }
+
+/* 도트가 튀는 걸 싫어하는 사용자에게는 눌림 효과를 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  :where(
+  .px-btn,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector button,
+  .queue .actions button,
+  .queue button.ghost
+) { transition: none; }
+  :where(
+  .px-btn,
+  .chat .composer button,
+  .chat button.ghost,
+  .inspector button,
+  .queue .actions button,
+  .queue button.ghost
+):active:not(:disabled) { transform: none; }
+}
+
+/* ========================================================================
+   기본 요소
+   ===================================================================== */
+* { box-sizing: border-box; }
+
+/* scroll-behavior: smooth 는 두지 않는다.
+   해시가 붙은 URL 로 처음 진입할 때(= 출처 링크로 들어오는 경로) 브라우저가
+   레이아웃이 잡히기 전에 스크롤을 시작해 목표 조항을 지나쳐 버린다. */
+html { scroll-padding-top: 6rem; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--grass);
+  background-image: var(--grass-tile);
+  background-repeat: repeat;
+  /* 도트를 확대할 일이 있어도 흐려지지 않게 */
+  image-rendering: pixelated;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    Pretendard, 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+  word-break: keep-all;      /* 한글은 어절 단위로 끊는다 */
+  overflow-wrap: break-word;
+}
+
+/* 픽셀 폰트를 붙이는 유틸.
+   letter-spacing 을 주지 않는다 — 도트 사이가 벌어지면 자간이 깨져 보인다. */
+.pixel-type {
+  font-family: 'Galmuri11', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+a { color: var(--rose-deep); text-underline-offset: 3px; }
+
+/* 포커스 링도 각지게. outline-offset 을 도트 단위로 준다. */
+:focus-visible {
+  outline: var(--u) solid var(--rose-deep);
+  outline-offset: var(--u);
+  border-radius: 0;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  font-size: 0.85em;
+  color: var(--ink);
+  background: var(--cream-3);
+  padding: 0.1em 0.4em;
+  border-radius: 0;
+  box-shadow: 0 0 0 2px var(--cream-3);
+}
+
+/* ── 각진 스크롤바 ── */
+* { scrollbar-color: var(--wood-2) var(--cream-3); scrollbar-width: thin; }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--cream-3); }
+::-webkit-scrollbar-thumb {
+  background: var(--wood-2);
+  border: var(--u) solid var(--cream-3);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--wood); }
+
+/* ========================================================================
+   레이아웃 — 머리말 / 본문 / 꼬리말
+   ===================================================================== */
+
+/* 나무 간판처럼 생긴 머리말. backdrop blur 는 쓰지 않는다 — 흐림은 도트의 적. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1.25rem;
+  background: var(--sign);
+  /* 아래쪽에 나뭇결 한 줄 — 간판 두께를 만든다 */
+  box-shadow: inset 0 calc(var(--u) * -1) 0 var(--sign-edge),
+              0 var(--u) 0 rgb(0 0 0 / 0.12);
+}
+
+.brand {
+  font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 24px;              /* 12px 배수 — 도트가 딱 맞는다 */
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--sign-ink);
+  text-decoration: none;
+  /* 픽셀 게임 로고의 각진 외곽선 */
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 0.35);
+}
+.brand span { color: var(--sign-accent); }
+/* 브랜드 앞 화살표. .brand 는 판(.px)을 두르지 않으므로 ::before 를 그대로 쓴다 */
+.brand::before { content: '\25B8'; margin-right: 0.4em; color: var(--sign-deco); }
+
+.site-header nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* 메뉴 = 아이템 슬롯. 레퍼런스의 하단 아이템 바에서 가져왔다. */
+.site-header nav a {
+  --px-bg: var(--cream-2);
+  --px-bd: var(--wood-2);
+  --px-u: 3px;
+  font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 12px;              /* Galmuri11 의 기준 크기 */
+  line-height: 20px;
+  letter-spacing: 0;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 6px 12px;
+  transition: transform 60ms steps(1);
+}
+.site-header nav a:hover { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
+.site-header nav a.active {
+  --px-bg: var(--rose);
+  --px-bd: var(--cream);
+  color: var(--on-fill);
+  font-weight: 700;
+}
+.site-header nav a:active { transform: translateY(3px); }
+
+main {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+/* 본문을 감싸는 큰 양피지 패널.
+   잔디 위에 글자가 직접 놓이지 않게 한다 — 가독성 규칙 1번이 여기서 지켜진다. */
+.page-sheet {
+  --px-bg: var(--cream);
+  --px-bd: var(--wood);
+  padding: 2rem 1.75rem 2.5rem;
+}
+@media (max-width: 520px) {
+  .page-sheet { padding: 1.5rem 1.1rem 2rem; }
+}
+
+.site-footer {
+  max-width: var(--maxw);
+  margin: 0 auto 3rem;
+  padding: 1rem 1.25rem;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
+/* ── 문서 제목 ── */
+h1 {
+  font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 36px;              /* 12 x 3 */
+  line-height: 48px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--ink);
+  margin: 0 0 0.75rem;
+}
+
+/* 안내 문단은 픽셀 폰트를 쓰지 않는다 — 두 줄 이상 읽는 글이다. */
+.lede {
+  color: var(--ink-soft);
+  margin: 0 0 1.75rem;
+  font-size: 0.95rem;
+}
+/* 형광펜 자리다 — 위에 올라가는 건 본문색(--ink)이므로 --sun 이 아니라 --mark 다.
+   --sun 을 쓰면 밤에 밝은 금색 위에 밝은 잉크가 얹혀 1.9:1 까지 떨어진다. */
+.lede strong {
+  color: var(--ink);
+  font-weight: 700;
+  background: var(--mark);
+  box-shadow: 0 0 0 3px var(--mark);
+}

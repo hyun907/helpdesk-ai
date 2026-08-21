@@ -16,106 +16,154 @@ import Chat from '../components/Chat.jsx';
   <Chat client:load />
 </BaseLayout>
 
-<style>
-  h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
-  .lede { color: var(--fg-muted); margin: 0 0 1.75rem; }
-  .lede strong { color: var(--fg); }
-</style>
-
 <style is:global>
   .chat { display: flex; flex-direction: column; gap: 0.75rem; }
 
   .chat-head {
     display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-    font-size: 0.8rem; color: var(--fg-muted);
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    color: var(--ink-soft);
   }
-  .chat-head code { font-size: 0.78rem; }
+  .chat-head code { font-size: 11px; }
 
-  /* ── 대화 로그 ───────────────────────────────────── */
+  /* ── 대화 로그 ─────────────────────────────────────
+     게임의 대사창처럼 한 겹 안쪽으로 파인 판. 스크롤되는 요소라
+     .px 의 가상요소 방식 대신 요소 자체를 잘라 낸다(.px-clip). */
   .chat .log {
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
     display: flex; flex-direction: column; gap: 1.1rem;
     min-height: 22rem; max-height: 60vh; overflow-y: auto;
     padding: 1.25rem;
-    background: var(--bg-soft);
-    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  /* clip-path 가 outline 을 잘라 먹으므로 포커스는 안쪽 선으로 그린다 */
+  .chat .log:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 var(--u) var(--rose-deep);
   }
 
-  .chat .empty { color: var(--fg-muted); font-size: 0.92rem; margin: auto 0; }
+  .chat .empty { color: var(--ink-soft); font-size: 0.92rem; margin: auto 0; }
   .chat .empty p { margin: 0 0 0.6rem; }
-  .chat .empty ul { margin: 0; padding-left: 1.2rem; }
-  .chat .empty li { margin: 0.25rem 0; }
+  .chat .empty ul { margin: 0; padding-left: 0; list-style: none; }
+  .chat .empty li { margin: 0.35rem 0; padding-left: 1.4rem; position: relative; }
+  /* 도트 하트 불릿 — 3x3 격자에 X.X / XXX / .X. 로 찍는다 */
+  .chat .empty li::before {
+    content: '';
+    position: absolute; left: 0; top: 0.6em;
+    width: var(--u); height: var(--u);
+    background: var(--rose);
+    box-shadow:
+      calc(var(--u) * 2) 0 0 var(--rose),
+      0 var(--u) 0 var(--rose),
+      var(--u) var(--u) 0 var(--rose),
+      calc(var(--u) * 2) var(--u) 0 var(--rose),
+      var(--u) calc(var(--u) * 2) 0 var(--rose);
+  }
 
   .chat .msg { display: flex; flex-direction: column; gap: 0.45rem; max-width: 100%; }
   .chat .msg.user { align-items: flex-end; }
   .chat .msg.assistant { align-items: flex-start; }
 
+  /* 말풍선. 답변은 길게 읽는 글이라 픽셀 폰트를 쓰지 않는다 —
+     테두리와 모서리만 도트로 잡고 글자는 고딕 16px 그대로 둔다. */
   .chat .bubble {
     max-width: 46em;
-    padding: 0.7rem 1rem;
-    border-radius: var(--radius);
-    line-height: 1.7;
+    padding: 0.75rem 1.05rem;
+    line-height: 1.75;
     white-space: pre-wrap;          /* 답변의 줄바꿈·목록을 그대로 살린다 */
     overflow-wrap: break-word;
   }
-  .chat .msg.user .bubble { background: var(--accent); color: #fff; }
-  .chat .msg.assistant .bubble { background: var(--bg); border: 1px solid var(--border); }
+  .chat .msg.user .bubble {
+    --px-bg: var(--rose);
+    --px-bd: var(--wood);
+    color: var(--on-fill);
+  }
+  .chat .msg.assistant .bubble {
+    --px-bg: var(--cream);
+    --px-bd: var(--wood-2);
+  }
 
   /* 스트리밍 중임을 알리는 커서. 토큰이 멈춘 건지 끝난 건지 구분된다. */
   .chat .caret {
-    display: inline-block; width: 0.5em; height: 1.05em;
-    margin-left: 2px; vertical-align: text-bottom;
-    background: var(--accent);
+    display: inline-block; width: var(--u); height: 1.05em;
+    margin-left: 3px; vertical-align: text-bottom;
+    background: var(--rose-deep);
     animation: chat-blink 1s step-end infinite;
   }
   @keyframes chat-blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .chat .caret { animation: none; }
+  }
 
-  .chat .msg-error { margin: 0.5rem 0 0; font-size: 0.88rem; color: #c0392b; }
+  .chat .msg-error {
+    margin: 0.5rem 0 0; font-size: 0.88rem; font-weight: 700; color: var(--danger);
+  }
 
-  /* ── 근거 ────────────────────────────────────────── */
+  /* ── 근거 ──────────────────────────────────────────
+     레퍼런스 하단의 아이템 슬롯처럼. 누를 수 있는 칸이라는 게 보여야 한다. */
   .chat .sources {
     display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
-    font-size: 0.8rem;
+    font-size: 12px;
   }
   .chat .sources-label {
-    color: var(--fg-muted); font-weight: 600;
-    letter-spacing: 0.04em;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    color: var(--ink-soft); font-weight: 700;
   }
+  .chat .sources-label::before { content: '▪ '; color: var(--mint); }
   .chat .chip {
-    padding: 0.2rem 0.6rem;
-    background: var(--accent-soft); color: var(--fg);
-    border: 1px solid transparent; border-radius: 999px;
+    /* 인라인 <a> 라 inline-block 이 반드시 필요하다 — 없으면 판이 글자를 뚫고 나온다 */
+    display: inline-block;
+    --px-bg: var(--mint);
+    --px-bd: var(--wood-2);
+    --px-u: 3px;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    padding: 4px 10px;
+    color: var(--on-fill);
     text-decoration: none;
+    transition: transform 60ms steps(1);
   }
-  .chat .chip:hover { border-color: var(--accent); }
-  .chat .sources.none { color: var(--fg-muted); font-size: 0.78rem; }
+  .chat .chip:hover { --px-bg: var(--sun); }
+  .chat .chip:active { transform: translateY(3px); }
+  .chat .sources.none {
+    color: var(--ink-soft); font-size: 0.82rem; font-style: normal;
+  }
 
-  /* ── 입력 ────────────────────────────────────────── */
+  /* ── 입력 ──────────────────────────────────────────
+     입력칸은 모서리를 깎지 않는다. clip-path 를 걸면 포커스 링이 잘려서
+     키보드로 어디에 있는지 알 수 없게 된다. 각진 테두리로 충분히 도트답다. */
   .chat .composer { display: flex; gap: 0.6rem; align-items: stretch; }
   .chat .composer textarea {
     flex: 1 1 auto; min-width: 0; resize: vertical;
     padding: 0.7rem 0.9rem;
     font: inherit; font-size: 0.95rem; line-height: 1.6;
-    color: var(--fg); background: var(--bg);
-    border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--ink); background: var(--cream-2);
+    border: 3px solid var(--wood-2); border-radius: 0;
   }
+  .chat .composer textarea::placeholder { color: var(--ink-soft); opacity: 1; }
   .chat .composer textarea:focus-visible {
-    outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent;
+    outline: 3px solid var(--rose-deep); outline-offset: 2px;
+    border-color: var(--wood);
   }
+
   .chat .composer button {
     flex: 0 0 auto; align-self: stretch;
+    --px-bg: var(--rose);
+    --px-bd: var(--wood);
     padding: 0 1.3rem;
-    font: inherit; font-size: 0.92rem; font-weight: 600;
-    color: #fff; background: var(--accent);
-    border: 1px solid transparent; border-radius: var(--radius);
-    cursor: pointer;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; letter-spacing: 0; font-weight: 700;
   }
   .chat button.ghost {
-    padding: 0.3rem 0.7rem; font: inherit; font-size: 0.8rem;
-    color: var(--fg-muted); background: transparent;
-    border: 1px solid var(--border); border-radius: var(--radius);
-    cursor: pointer;
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
+    --px-u: 3px;
+    padding: 4px 12px;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 400;
+    color: var(--ink);
   }
-  .chat button:hover:not(:disabled) { filter: brightness(1.08); }
-  .chat button.ghost:hover:not(:disabled) { color: var(--fg); border-color: var(--fg-muted); filter: none; }
-  .chat button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .chat button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
 </style>

@@ -70,67 +70,122 @@ const sourceFile = `${entry.id}.md`;
   <a class="back" href="/docs">← 정책 목록</a>
 </BaseLayout>
 
-<style>
+<style is:global>
   .eyebrow {
-    margin: 0 0 0.5rem;
-    font-size: 0.82rem;
-    color: var(--fg-muted);
-    letter-spacing: 0.01em;
+    margin: 0 0 0.6rem;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    color: var(--ink-soft);
   }
+  .eyebrow::before { content: '▤ '; color: var(--wood); }
+
+  /* 문서 제목 — 아래를 나무 울타리 한 줄로 받친다 */
+  .doc-title {
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 36px; line-height: 48px; letter-spacing: 0; font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 1.5rem; padding-bottom: 0.9rem;
+    /* 도트 울타리 — hr 과 같은 무늬로 맞춘다 */
+    border-bottom: var(--u) solid transparent;
+    border-image: repeating-linear-gradient(
+      90deg,
+      var(--wood-2) 0 var(--u),
+      transparent var(--u) calc(var(--u) * 2)
+    ) 1;
+  }
+
+  /* 조항 목차 = 미션 판 */
   .toc {
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
     margin: 1.75rem 0 2.5rem;
-    padding: 1rem 1.25rem;
-    background: var(--bg-soft);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
   }
   .toc-title {
-    margin: 0 0 0.5rem;
-    font-size: 0.75rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--fg-muted);
-  }
-  .doc-title {
-    font-size: 1.9rem; line-height: 1.35; letter-spacing: -0.02em;
-    margin: 0 0 1.5rem; padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border);
+    margin: 0 0 0.6rem;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    color: var(--on-fill);
+    display: inline-block;
+    padding: 2px 9px;
+    background: var(--sun);
+    box-shadow: 0 0 0 2px var(--wood-2);
   }
   .toc ul { margin: 0; padding: 0; list-style: none; }
-  .toc li { font-size: 0.92rem; margin: 0.15rem 0; }
-  .toc a { color: var(--fg); text-decoration: none; }
-  .toc a:hover { color: var(--accent); text-decoration: underline; }
+  .toc li { font-size: 0.93rem; margin: 0.2rem 0; padding-left: 1.1rem; position: relative; }
+  /* 도트 하나짜리 불릿 */
+  .toc li::before {
+    content: '';
+    position: absolute; left: 0; top: 0.72em;
+    width: var(--u); height: var(--u);
+    background: var(--rose);
+  }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .toc a:hover { color: var(--rose-deep); text-decoration: underline; }
 
   .back {
-    display: inline-block; margin-top: 3rem;
-    font-size: 0.9rem; text-decoration: none;
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
+    --px-u: 3px;
+    display: inline-block; margin-top: 2.5rem;
+    padding: 6px 14px;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    color: var(--ink); text-decoration: none;
+    /* .px 목록에 없는 요소라 판을 직접 두르지 않고 각진 테두리로 처리한다 */
+    border: 3px solid var(--wood-2);
   }
-  .back:hover { text-decoration: underline; }
-</style>
+  .back:hover { background: var(--hover-fill); border-color: var(--wood); }
 
-<style is:global>
-  /* ── 정책 원문 렌더 ─────────────────────────────── */
+  /* ── 정책 원문 렌더 ───────────────────────────────
+     여기부터는 '읽는 글'이다. 픽셀 폰트를 쓰지 않는다.
+     조항 제목(h2)만 도트로 잡아 구간을 나눈다. */
   /* 원문 h1 은 위에서 .doc-title 로 이미 렌더했다. 접근성 트리에서도 빠지도록 display:none. */
   .prose h1 { display: none; }
   .prose h2 {
-    font-size: 1.25rem; margin: 2.75rem 0 0.9rem;
-    scroll-margin-top: 5.5rem;
-    letter-spacing: -0.01em;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 24px; line-height: 32px; letter-spacing: 0; font-weight: 700;
+    margin: 2.75rem 0 1rem;
+    scroll-margin-top: 6rem;
+    color: var(--ink);
   }
-  .prose h3 { font-size: 1.05rem; margin: 2rem 0 0.6rem; }
+  .prose h2::before { content: '▸ '; color: var(--rose); }
+  /* h3 는 픽셀 폰트를 쓰지 않는다. 12px 로 내리면 본문(16px)보다 작아져
+     위계가 거꾸로 뒤집히고, 18px 로 올리면 도트 격자가 어긋나 흐려진다. */
+  .prose h3 {
+    font-size: 1.05rem; font-weight: 700; margin: 2rem 0 0.6rem;
+    scroll-margin-top: 6rem;
+    padding-left: 0.9rem; position: relative;
+  }
+  .prose h3::before {
+    content: '';
+    position: absolute; left: 0; top: 0.62em;
+    width: var(--u); height: var(--u);
+    background: var(--mint);
+    box-shadow: 0 0 0 2px var(--wood-2);
+  }
 
   /* 출처 링크로 특정 조항에 진입하면 그 조항을 눈에 띄게 표시한다.
-     "3회 위반 시 이용 정지 7일" 이라는 답변의 근거가 화면 어디인지 바로 보이게 한다. */
+     "3회 위반 시 이용 정지 7일" 이라는 답변의 근거가 화면 어디인지 바로 보이게 한다.
+     border-radius 는 주지 않는다 — 각진 형광펜이 도트에 맞는다. */
   .prose h2:target,
   .prose h3:target {
     background: var(--mark);
     box-shadow: -0.6rem 0 0 var(--mark), 0.6rem 0 0 var(--mark);
-    border-radius: 3px;
   }
 
-  .prose p { margin: 0.9rem 0; }
+  .prose p { margin: 0.95rem 0; }
   .prose ul, .prose ol { padding-left: 1.35rem; }
   .prose li { margin: 0.35rem 0; }
-  .prose strong { font-weight: 700; color: var(--fg); }
+  .prose ul { list-style: none; padding-left: 1.1rem; }
+  .prose ul > li { position: relative; padding-left: 0.9rem; }
+  .prose ul > li::before {
+    content: '';
+    position: absolute; left: 0; top: 0.72em;
+    width: var(--u); height: var(--u);
+    background: var(--wood-2);
+  }
+  .prose strong { font-weight: 700; color: var(--ink); }
 
   /* 표가 이 문서들의 핵심이다 — 제재 수위, 복구 가능 사유가 전부 표로 되어 있다.
      좁은 화면에서 표만 가로 스크롤되게 하고 페이지 본문은 절대 흔들지 않는다. */
@@ -138,7 +193,7 @@ const sourceFile = `${entry.id}.md`;
     display: block; overflow-x: auto;
     width: 100%; max-width: 100%;
     border-collapse: collapse;
-    margin: 1.25rem 0;
+    margin: 1.35rem 0;
     font-size: 0.93rem;
   }
   /* nowrap 을 두지 않는다. 이 표들은 '비고' 칸에 문장이 들어가서,
@@ -146,20 +201,31 @@ const sourceFile = `${entry.id}.md`;
      줄바꿈시키고, overflow-x 는 그래도 넘칠 때의 안전망으로만 남긴다. */
   .prose td { min-width: 6em; }
   .prose thead th {
-    background: var(--bg-inset);
-    font-weight: 700; text-align: left;
+    background: var(--cream-3);
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    color: var(--ink);
+    text-align: left;
   }
   .prose th, .prose td {
-    border: 1px solid var(--border);
-    padding: 0.55rem 0.85rem;
+    border: 3px solid var(--wood-2);
+    padding: 0.6rem 0.9rem;
   }
-  .prose tbody tr:nth-child(even) { background: var(--bg-soft); }
+  .prose tbody tr:nth-child(even) { background: var(--cream-2); }
 
   .prose blockquote {
-    margin: 1.25rem 0; padding: 0.5rem 1rem;
-    border-left: 3px solid var(--accent);
-    background: var(--accent-soft);
-    color: var(--fg);
+    --px-bg: var(--cream-2);
+    --px-bd: var(--mint);
+    margin: 1.35rem 0; padding: 0.85rem 1.15rem;
+    color: var(--ink);
   }
-  .prose hr { border: 0; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+  /* 울타리 한 줄 — 도트를 반복해 구분선을 만든다 */
+  .prose hr {
+    border: 0; height: var(--u); margin: 2.5rem 0;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--wood-2) 0 var(--u),
+      transparent var(--u) calc(var(--u) * 2)
+    );
+  }
 </style>

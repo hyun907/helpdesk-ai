@@ -18,14 +18,10 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
   <ChunkInspector client:load />
 </BaseLayout>
 
-<style>
-  h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
-  .lede { color: var(--fg-muted); margin: 0 0 2rem; }
-  .lede strong { color: var(--fg); }
-</style>
-
 <style is:global>
-  /* ── 검색 컨트롤 ─────────────────────────────────── */
+  /* ── 검색 컨트롤 ───────────────────────────────────
+     입력칸은 모서리를 깎지 않는다 — clip-path 가 포커스 링을 잘라 먹는다.
+     각진 3px 테두리만으로도 충분히 도트답다. */
   .inspector .controls {
     display: flex; gap: 0.6rem; align-items: stretch; flex-wrap: wrap;
     margin-bottom: 0.85rem;
@@ -34,110 +30,159 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
     flex: 1 1 18rem; min-width: 0;
     padding: 0.6rem 0.85rem;
     font: inherit; font-size: 0.95rem;
-    color: var(--fg); background: var(--bg);
-    border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--ink); background: var(--cream-2);
+    border: 3px solid var(--wood-2); border-radius: 0;
+    -webkit-appearance: none; appearance: none;
   }
+  .inspector input::placeholder { color: var(--ink-soft); opacity: 1; }
   .inspector input:focus-visible {
-    outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent;
+    outline: 3px solid var(--rose-deep); outline-offset: 2px;
+    border-color: var(--wood);
   }
   .inspector .topk {
     display: flex; align-items: center; gap: 0.45rem;
     padding: 0 0.7rem;
-    font-size: 0.82rem; color: var(--fg-muted);
-    border: 1px solid var(--border); border-radius: var(--radius);
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; letter-spacing: 0;
+    color: var(--ink-soft); background: var(--cream-2);
+    border: 3px solid var(--wood-2); border-radius: 0;
   }
   .inspector .topk input {
     width: 3.4rem; padding: 0.35rem 0.4rem;
-    font: inherit; font-size: 0.9rem;
-    color: var(--fg); background: transparent;
-    border: 0; border-left: 1px solid var(--border); border-radius: 0;
-  }
-  .inspector button {
-    padding: 0.6rem 1.1rem;
-    font: inherit; font-size: 0.92rem; font-weight: 600;
-    color: #fff; background: var(--accent);
-    border: 1px solid transparent; border-radius: var(--radius);
-    cursor: pointer;
-  }
-  .inspector button:hover:not(:disabled) { filter: brightness(1.08); }
-  .inspector button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .inspector button.ghost {
-    color: var(--fg-muted); background: transparent; border-color: var(--border);
-    font-weight: 500; padding: 0.45rem 0.8rem; font-size: 0.85rem;
-  }
-  .inspector button.ghost:hover:not(:disabled) { color: var(--fg); border-color: var(--fg-muted); }
-  .inspector button.danger {
-    background: #c0392b; color: #fff; border-color: transparent;
-    padding: 0.45rem 0.8rem; font-size: 0.85rem;
+    font: inherit; font-size: 12px;
+    color: var(--ink); background: transparent;
+    border: 0; border-left: 3px solid var(--wood-2); border-radius: 0;
   }
 
+  .inspector button {
+    --px-bg: var(--rose);
+    --px-bd: var(--wood);
+    padding: 0.6rem 1.1rem;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; letter-spacing: 0; font-weight: 700;
+    color: var(--on-fill);
+  }
+  .inspector button:hover:not(:disabled) { --px-bg: var(--rose-2); }
+  .inspector button.ghost {
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
+    --px-u: 3px;
+    color: var(--ink); font-weight: 400;
+    padding: 5px 12px; font-size: 12px;
+  }
+  .inspector button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
+  /* 되돌릴 수 없는 재색인 — 색으로 먼저 경고한다 */
+  .inspector button.danger {
+    --px-bg: var(--danger-fill);
+    --px-bd: var(--danger);
+    color: var(--on-fill);
+    padding: 5px 12px; font-size: 12px;
+  }
+  .inspector button.danger:hover:not(:disabled) { --px-bg: var(--danger-fill-2); }
+
+  /* 재색인 줄 — 아래를 나무 울타리 한 줄로 막는다 */
   .inspector .ingest-row {
     display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
     padding-bottom: 1.5rem; margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--u) solid transparent;
+    border-image: repeating-linear-gradient(
+      90deg,
+      var(--wood-2) 0 var(--u),
+      transparent var(--u) calc(var(--u) * 2)
+    ) 1;
   }
-  .inspector .hint { font-size: 0.82rem; color: var(--fg-muted); }
-  .inspector .hint.ok { color: var(--accent); }
-  .inspector .hint.bad { color: #c0392b; }
+  .inspector .hint {
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    color: var(--ink-soft);
+  }
+  .inspector .hint.ok { color: var(--ink); }
+  .inspector .hint.ok::before { content: '▪ '; color: var(--mint); }
+  .inspector .hint.bad { color: var(--danger); font-weight: 700; }
+  .inspector .hint.bad::before { content: '▪ '; }
 
   .inspector .notice {
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
     padding: 1rem 1.15rem; margin: 0;
-    font-size: 0.92rem; color: var(--fg-muted);
-    background: var(--bg-soft);
-    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 0.92rem; color: var(--ink-soft);
   }
-  .inspector .notice strong { color: var(--fg); }
+  .inspector .notice strong { color: var(--ink); }
   .inspector .notice.bad {
-    color: #c0392b; background: transparent; border-color: currentColor;
+    --px-bg: var(--cream);
+    --px-bd: var(--danger);
+    color: var(--danger); font-weight: 700;
   }
 
-  /* ── 검색 결과 ───────────────────────────────────── */
-  .inspector .results { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+  /* ── 검색 결과 ─────────────────────────────────────
+     한 줄이 하나의 카드. 레퍼런스의 미션 판처럼 순위가 왼쪽에 붙는다. */
+  .inspector .results { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
   .inspector .results li {
-    display: grid; grid-template-columns: 2rem 1fr; gap: 0.75rem;
-    padding: 0.9rem 1.1rem;
-    background: var(--bg-soft);
-    border: 1px solid var(--border); border-radius: var(--radius);
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
+    display: grid; grid-template-columns: 2.4rem 1fr; gap: 0.75rem;
+    padding: 0.95rem 1.15rem;
   }
+  /* 순위 = 아이템 슬롯 번호 */
   .inspector .rank {
-    font-size: 0.8rem; font-weight: 700; color: var(--fg-muted);
-    text-align: right; padding-top: 0.15rem;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    color: var(--on-fill); background: var(--sun);
+    text-align: center;
+    align-self: start;
+    padding: 2px 0;
+    box-shadow: 0 0 0 3px var(--wood-2);
   }
   .inspector .body { min-width: 0; }
   .inspector .head {
     display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;
     margin-bottom: 0.5rem;
   }
-  .inspector .head a { font-weight: 600; font-size: 0.95rem; }
+  .inspector .head a { font-weight: 700; font-size: 0.95rem; }
   .inspector .heading {
-    font-size: 0.8rem; color: var(--fg);
-    padding: 0.1rem 0.45rem;
-    background: var(--accent-soft); border-radius: 4px;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    color: var(--on-fill);
+    padding: 1px 7px;
+    background: var(--mint);
+    box-shadow: 0 0 0 2px var(--wood-2);
   }
-  .inspector .version { font-size: 0.78rem; color: var(--fg-muted); }
+  .inspector .version { font-size: 0.78rem; color: var(--ink-soft); }
 
   .inspector .score {
     display: flex; align-items: center; gap: 0.6rem;
     margin-bottom: 0.55rem;
   }
+  /* 체력 게이지처럼 칸이 뚝뚝 끊기게. 부드러운 그라데이션을 쓰지 않는다. */
   .inspector .bar {
-    flex: 1 1 auto; height: 6px; min-width: 4rem;
-    background: var(--bg-inset); border-radius: 3px; overflow: hidden;
+    flex: 1 1 auto; height: 12px; min-width: 4rem;
+    background: var(--cream-3);
+    box-shadow: 0 0 0 3px var(--wood-2);
+    overflow: hidden;
   }
-  .inspector .bar span { display: block; height: 100%; background: var(--accent); }
+  .inspector .bar span {
+    display: block; height: 100%;
+    background: var(--rose);
+    /* 4px 마다 한 칸씩 끊어 도트 게이지로 보이게 한다 */
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--rose) 0 var(--u),
+      var(--rose-2) var(--u) calc(var(--u) * 2)
+    );
+  }
   .inspector .num {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.82rem; font-variant-numeric: tabular-nums;
+    font-size: 0.82rem; font-variant-numeric: tabular-nums; font-weight: 700;
   }
   .inspector .drop {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.75rem; color: var(--fg-muted);
+    font-size: 0.75rem; color: var(--ink-soft);
     font-variant-numeric: tabular-nums;
   }
   /* 낙차가 큰 지점 — 임계값을 여기쯤 두라는 신호다. */
-  .inspector .drop.big { color: #c0392b; font-weight: 700; }
+  .inspector .drop.big { color: var(--danger); font-weight: 700; }
 
   .inspector .preview {
-    margin: 0; font-size: 0.88rem; line-height: 1.65; color: var(--fg-muted);
+    margin: 0; font-size: 0.88rem; line-height: 1.7; color: var(--ink-soft);
   }
 </style>

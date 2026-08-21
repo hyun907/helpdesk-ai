@@ -16,77 +16,116 @@ import TicketQueue from '../../components/TicketQueue.jsx';
   <TicketQueue client:load />
 </BaseLayout>
 
-<style>
-  h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
-  .lede { color: var(--fg-muted); margin: 0 0 2rem; }
-  .lede strong { color: var(--fg); }
-</style>
-
 <style is:global>
   .queue { display: flex; flex-direction: column; gap: 0.9rem; }
 
+  /* 레퍼런스의 MISSION 판 — 남은 건수를 위에 크게 박는다 */
   .queue-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding-bottom: 0.9rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding-bottom: 0.9rem;
+    border-bottom: var(--u) solid transparent;
+    border-image: repeating-linear-gradient(
+      90deg,
+      var(--wood-2) 0 var(--u),
+      transparent var(--u) calc(var(--u) * 2)
+    ) 1;
   }
-  .queue .count { font-size: 0.9rem; color: var(--fg-muted); }
-  .queue .count strong { color: var(--fg); font-size: 1rem; }
+  .queue .count {
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 24px; letter-spacing: 0;
+    color: var(--ink-soft);
+  }
+  .queue .count strong {
+    font-size: 24px; color: var(--ink); font-weight: 700;
+    margin: 0 0.15em;
+  }
 
   .queue .notice {
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
     padding: 1rem 1.15rem; margin: 0 0 0.75rem;
-    font-size: 0.92rem; color: var(--fg-muted);
-    background: var(--bg-soft);
-    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 0.92rem; color: var(--ink-soft);
   }
-  .queue .notice.bad { color: #c0392b; background: transparent; border-color: currentColor; }
+  .queue .notice.bad {
+    --px-bg: var(--cream);
+    --px-bd: var(--danger);
+    color: var(--danger); font-weight: 700;
+  }
 
-  .queue .tickets { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+  .queue .tickets { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
   .queue .tickets li {
-    padding: 1rem 1.2rem;
-    background: var(--bg-soft);
-    border: 1px solid var(--border); border-radius: var(--radius);
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
+    padding: 1.05rem 1.2rem;
   }
   /* 처리된 건은 눈에서 물러나되 사라지지는 않는다 — 방금 무엇을 눌렀는지 남아 있어야 한다. */
-  .queue .tickets li.resolved { opacity: 0.6; }
+  .queue .tickets li.resolved { opacity: 0.55; }
 
   .queue .t-head {
     display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
-    margin-bottom: 0.55rem;
+    margin-bottom: 0.6rem;
   }
   .queue .no { font-size: 0.85rem; font-weight: 700; }
+  /* 두 종류는 되돌리기 어려운 방향이 다르다 — 재화 생성 vs 제재 효력 해제.
+     색만으로 구분하지 않고 앞에 표식을 하나씩 붙인다. */
   .queue .type {
-    font-size: 0.76rem; padding: 0.15rem 0.5rem; border-radius: 999px;
+    /* 인라인 <span> 이라 inline-block 이 반드시 필요하다 */
+    display: inline-block;
+    --px-u: 3px;
+    --px-bd: var(--wood-2);
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    padding: 2px 9px;
+    color: var(--on-fill);
   }
-  /* 두 종류는 되돌리기 어려운 방향이 다르다 — 재화 생성 vs 제재 효력 해제 */
-  .queue .type.recovery { background: var(--accent-soft); color: var(--fg); }
-  .queue .type.appeal { background: #f6e5c3; color: #6b4b12; }
-  .queue .when { font-size: 0.78rem; color: var(--fg-muted); margin-left: auto; }
+  .queue .type.recovery { --px-bg: var(--sky); }
+  .queue .type.recovery::before { content: '◆ '; }
+  .queue .type.appeal { --px-bg: var(--sun); }
+  .queue .type.appeal::before { content: '※ '; }
 
+  .queue .when {
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    color: var(--ink-soft); margin-left: auto;
+  }
+
+  /* 신청 내용은 사람이 읽고 판단하는 글이다 — 고딕 그대로 둔다 */
   .queue .detail {
-    margin: 0 0 0.85rem; font-size: 0.93rem; line-height: 1.65;
+    margin: 0 0 0.9rem; font-size: 0.93rem; line-height: 1.75;
     overflow-wrap: break-word;
   }
 
+  /* 큐 안의 버튼은 머리말의 새로고침까지 전부 같은 크기·서체를 쓴다.
+     .actions 안쪽만 잡아 두면 머리말 버튼에 여백이 안 붙어 판이 글자에 붙는다. */
+  .queue button {
+    --px-bg: var(--cream);
+    --px-bd: var(--wood-2);
+    --px-u: 3px;
+    padding: 5px 14px;
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0; font-weight: 700;
+    color: var(--ink);
+  }
   .queue .actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-  .queue .actions button {
-    padding: 0.4rem 0.9rem;
-    font: inherit; font-size: 0.86rem; font-weight: 600;
-    border-radius: var(--radius); border: 1px solid var(--border);
-    background: var(--bg); color: var(--fg);
-    cursor: pointer;
-  }
-  .queue button.approve:hover { border-color: var(--accent); color: var(--accent); }
-  .queue button.reject:hover { border-color: #c0392b; color: #c0392b; }
-  .queue button.confirm-approve { background: var(--accent); color: #fff; border-color: transparent; }
-  .queue button.confirm-reject { background: #c0392b; color: #fff; border-color: transparent; }
+  .queue button.approve:hover:not(:disabled) { --px-bg: var(--mint); color: var(--on-fill); }
+  .queue button.reject:hover:not(:disabled) { --px-bg: var(--danger-fill); color: var(--on-fill); }
+  /* 한 번 더 누르면 실행된다 — 이 단계에서는 색을 꽉 채워 되돌릴 수 없음을 알린다 */
+  .queue button.confirm-approve { --px-bg: var(--mint); --px-bd: var(--wood); color: var(--on-fill); }
+  .queue button.confirm-reject { --px-bg: var(--danger-fill); --px-bd: var(--danger); color: var(--on-fill); }
   .queue button.ghost {
-    font-weight: 500; color: var(--fg-muted); background: transparent;
+    --px-bg: var(--cream-2);
+    font-weight: 400; color: var(--ink-soft);
   }
-  .queue button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .queue button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); color: var(--ink); }
 
-  .queue .warn { font-size: 0.8rem; color: #c0392b; font-weight: 600; }
+  .queue .warn {
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    color: var(--danger); font-weight: 700;
+  }
+  .queue .warn::before { content: '⚠ '; }
 
-  .queue .outcome { margin: 0; font-size: 0.88rem; color: var(--fg-muted); }
-  .queue .outcome strong { color: var(--fg); }
-  .queue .outcome.bad { color: #c0392b; }
+  .queue .outcome { margin: 0; font-size: 0.88rem; color: var(--ink-soft); }
+  .queue .outcome strong { color: var(--ink); }
+  .queue .outcome.bad { color: var(--danger); font-weight: 700; }
 </style>

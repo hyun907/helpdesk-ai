@@ -84,33 +84,46 @@ const items = docs
   </ul>
 </BaseLayout>
 
-<style>
-  h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
-  .lede { color: var(--fg-muted); margin: 0 0 2.25rem; }
-  .lede strong { color: var(--fg); }
+<style is:global>
+  /* h1 · .lede 는 pixel.css 에서 전역으로 잡는다 — 여기서 다시 정의하지 않는다 */
+  .doc-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; }
 
-  .doc-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
-
+  /* 문서 한 건 = 책장에 꽂힌 두루마리 한 장 */
   .doc-list a {
-    display: grid; gap: 0.3rem;
-    padding: 1.1rem 1.25rem;
-    background: var(--bg-soft);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    text-decoration: none; color: var(--fg);
-    transition: border-color 0.15s, transform 0.15s;
+    --px-bg: var(--cream-2);
+    --px-bd: var(--wood-2);
+    display: grid; gap: 0.35rem;
+    padding: 1.15rem 1.3rem;
+    text-decoration: none; color: var(--ink);
+    transition: transform 60ms steps(1);
   }
-  .doc-list a:hover {
-    border-color: var(--accent);
-    transform: translateY(-1px);
-  }
+  .doc-list a:hover { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
+  /* 누르면 도트 한 칸 내려간다 — 버튼과 같은 감각 */
+  .doc-list a:active { transform: translateY(var(--u)); }
 
-  .doc-title { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
+  .doc-title {
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 24px; line-height: 32px; letter-spacing: 0; font-weight: 700;
+    color: var(--ink);
+  }
+  .doc-title::before { content: '▤ '; color: var(--wood); }
+
+  /* 요약은 두 줄 읽는 글이다 — 픽셀 폰트를 쓰지 않는다 */
   .doc-excerpt {
-    color: var(--fg-muted); font-size: 0.92rem; line-height: 1.6;
+    color: var(--ink-soft); font-size: 0.92rem; line-height: 1.7;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .doc-meta { color: var(--fg-muted); font-size: 0.8rem; margin-top: 0.2rem; }
-  .doc-meta .dot { margin: 0 0.4rem; }
+  .doc-meta {
+    font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px; line-height: 20px; letter-spacing: 0;
+    color: var(--ink-soft); margin-top: 0.3rem;
+  }
+  .doc-meta code { font-size: 11px; }
+  .doc-meta .dot { margin: 0 0.4rem; color: var(--rose); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .doc-list a { transition: none; }
+    .doc-list a:active { transform: none; }
+  }
 </style>
