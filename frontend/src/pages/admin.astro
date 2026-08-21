@@ -56,7 +56,6 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
 
   .inspector button {
     --px-bg: var(--rose);
-    --px-bd: var(--wood);
     padding: 0.6rem 1.1rem;
     font-family: var(--font-pixel);
     font-size: 15px; letter-spacing: 0; font-weight: 400;
@@ -65,12 +64,11 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
   .inspector button:hover:not(:disabled) { --px-bg: var(--rose-2); }
   .inspector button.ghost {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     --px-u: 3px;
     color: var(--ink); font-weight: 400;
     padding: 6px 13px; font-size: 15px;
   }
-  .inspector button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
+  .inspector button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); }
   /* 되돌릴 수 없는 재색인 — 색으로 먼저 경고한다 */
   .inspector button.danger {
     --px-bg: var(--danger-fill);
@@ -103,7 +101,6 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
 
   .inspector .notice {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     padding: 1rem 1.15rem; margin: 0;
     font-size: 0.92rem; color: var(--ink-soft);
   }
@@ -119,7 +116,6 @@ import ChunkInspector from '../components/ChunkInspector.jsx';
   .inspector .results { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
   .inspector .results li {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     display: grid; grid-template-columns: 2.7rem 1fr; gap: 0.75rem;
     padding: 0.95rem 1.15rem;
   }

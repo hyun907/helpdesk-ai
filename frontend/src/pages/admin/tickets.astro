@@ -42,7 +42,6 @@ import TicketQueue from '../../components/TicketQueue.jsx';
 
   .queue .notice {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     padding: 1rem 1.15rem; margin: 0 0 0.75rem;
     font-size: 0.92rem; color: var(--ink-soft);
   }
@@ -55,7 +54,6 @@ import TicketQueue from '../../components/TicketQueue.jsx';
   .queue .tickets { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
   .queue .tickets li {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     padding: 1.05rem 1.2rem;
   }
   /* 처리된 건은 눈에서 물러나되 사라지지는 않는다 — 방금 무엇을 눌렀는지 남아 있어야 한다. */
@@ -72,7 +70,6 @@ import TicketQueue from '../../components/TicketQueue.jsx';
     /* 인라인 <span> 이라 inline-block 이 반드시 필요하다 */
     display: inline-block;
     --px-u: 3px;
-    --px-bd: var(--wood-2);
     font-family: var(--font-pixel);
     font-size: 15px; line-height: 22px; letter-spacing: 0;
     padding: 3px 10px;
@@ -99,7 +96,6 @@ import TicketQueue from '../../components/TicketQueue.jsx';
      .actions 안쪽만 잡아 두면 머리말 버튼에 여백이 안 붙어 판이 글자에 붙는다. */
   .queue button {
     --px-bg: var(--cream);
-    --px-bd: var(--wood-2);
     --px-u: 3px;
     padding: 6px 15px;
     font-family: var(--font-pixel);
@@ -110,13 +106,13 @@ import TicketQueue from '../../components/TicketQueue.jsx';
   .queue button.approve:hover:not(:disabled) { --px-bg: var(--mint); color: var(--on-fill); }
   .queue button.reject:hover:not(:disabled) { --px-bg: var(--danger-fill); color: var(--on-fill); }
   /* 한 번 더 누르면 실행된다 — 이 단계에서는 색을 꽉 채워 되돌릴 수 없음을 알린다 */
-  .queue button.confirm-approve { --px-bg: var(--mint); --px-bd: var(--wood); color: var(--on-fill); }
+  .queue button.confirm-approve { --px-bg: var(--mint); color: var(--on-fill); }
   .queue button.confirm-reject { --px-bg: var(--danger-fill); --px-bd: var(--danger); color: var(--on-fill); }
   .queue button.ghost {
     --px-bg: var(--cream-2);
     font-weight: 400; color: var(--ink-soft);
   }
-  .queue button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); color: var(--ink); }
+  .queue button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); color: var(--ink); }
 
   .queue .warn {
     font-family: var(--font-pixel);

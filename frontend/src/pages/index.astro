@@ -31,7 +31,6 @@ import Chat from '../components/Chat.jsx';
      .px 의 가상요소 방식 대신 요소 자체를 잘라 낸다(.px-clip). */
   .chat .log {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     display: flex; flex-direction: column; gap: 1.1rem;
     min-height: 22rem; max-height: 60vh; overflow-y: auto;
     padding: 1.25rem;
@@ -75,12 +74,10 @@ import Chat from '../components/Chat.jsx';
   }
   .chat .msg.user .bubble {
     --px-bg: var(--rose);
-    --px-bd: var(--wood);
     color: var(--on-fill);
   }
   .chat .msg.assistant .bubble {
     --px-bg: var(--cream);
-    --px-bd: var(--wood-2);
   }
 
   /* 스트리밍 중임을 알리는 커서. 토큰이 멈춘 건지 끝난 건지 구분된다. */
@@ -115,7 +112,6 @@ import Chat from '../components/Chat.jsx';
     /* 인라인 <a> 라 inline-block 이 반드시 필요하다 — 없으면 판이 글자를 뚫고 나온다 */
     display: inline-block;
     --px-bg: var(--mint);
-    --px-bd: var(--wood-2);
     --px-u: 3px;
     font-family: var(--font-pixel);
     font-size: 15px; line-height: 22px; letter-spacing: 0;
@@ -150,7 +146,6 @@ import Chat from '../components/Chat.jsx';
   .chat .composer button {
     flex: 0 0 auto; align-self: stretch;
     --px-bg: var(--rose);
-    --px-bd: var(--wood);
     color: var(--on-fill);
     padding: 0 1.3rem;
     font-family: var(--font-pixel);
@@ -158,12 +153,11 @@ import Chat from '../components/Chat.jsx';
   }
   .chat button.ghost {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     --px-u: 3px;
     padding: 5px 13px;
     font-family: var(--font-pixel);
     font-size: 15px; line-height: 22px; letter-spacing: 0; font-weight: 400;
     color: var(--ink);
   }
-  .chat button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
+  .chat button.ghost:hover:not(:disabled) { --px-bg: var(--hover-fill); }
 </style>

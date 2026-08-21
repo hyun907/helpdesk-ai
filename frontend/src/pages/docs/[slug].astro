@@ -71,6 +71,21 @@ const sourceFile = `${entry.id}.md`;
 </BaseLayout>
 
 <style is:global>
+
+  /* ── 이 화면은 판을 단색으로 칠한다 ──
+     램프(5단계 음영)를 끄는 방법은 단계 색을 전부 판 색으로 돌려놓는 것이다.
+     디더링 띠도 같은 색이 되어 함께 사라진다.
+     긴 문서에 세로 단계를 주면 글을 읽는 동안 바닥색이 계속 변해서
+     문서가 토막토막 잘린 것처럼 보인다. */
+  .page-sheet,
+  .toc,
+  .prose blockquote {
+    --_s1: var(--px-bg);
+    --_s2: var(--px-bg);
+    --_s3: var(--px-bg);
+    --_s4: var(--px-bg);
+    --_s5: var(--px-bg);
+  }
   .eyebrow {
     margin: 0 0 0.6rem;
     font-family: var(--font-pixel);
@@ -98,7 +113,6 @@ const sourceFile = `${entry.id}.md`;
   /* 조항 목차 = 미션 판 */
   .toc {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     margin: 1.75rem 0 2.5rem;
     padding: 1.1rem 1.3rem;
   }
@@ -126,7 +140,6 @@ const sourceFile = `${entry.id}.md`;
 
   .back {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     --px-u: 3px;
     display: inline-block; margin-top: 2.5rem;
     padding: 7px 15px;

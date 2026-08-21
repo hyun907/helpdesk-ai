@@ -76,8 +76,17 @@
   --cream:     #fdf5e2;   /* 패널 — 글자가 앉는 곳 */
   --cream-2:   #f6e7c6;   /* 패널 안쪽 한 겹 */
   --cream-3:   #eddbb4;   /* 더 안쪽 (표 머리·트랙) */
-  --wood:      #8a6440;   /* 테두리 — 진한 나무 */
-  --wood-2:    #b98d5f;   /* 테두리 보조 */
+  /* ── 외곽선 ──
+     픽셀 아트는 형태를 진한 선으로 가둔다. 선이 흐리면 도트가 뭉개져 보인다.
+     크림 위 10.7:1 · 로즈 위 5.3:1 — 어떤 채움색 위에서도 형태가 또렷하다.
+
+     밤에는 반대로 밝은 선을 쓴다. 어두운 선은 밤하늘 배경과 1.4:1 밖에 안 나와
+     판의 바깥 경계가 사라진다 — 진한 외곽선은 밝은 바탕에서만 성립한다. */
+  --wood:      #6b4a2c;   /* 나무색 — 아이콘·표 테두리·구분선 */
+  --wood-2:    #8a6440;
+  /* 외곽선을 만들 때 채움색에 섞는 색. 순수 검정을 쓰면 회색빛이 돌아
+     따뜻함이 빠진다 — 어두운 갈색으로 눌러야 색이 산다. */
+  --outline-mix: #3a2a18;
   --wood-hi:   #d8b384;   /* 나무 하이라이트 */
 
   --ink:       #4a3728;   /* 본문 글자 — 크림 위 10.35:1 */
@@ -179,8 +188,9 @@
     --cream:     #3b4657;
     --cream-2:   #333d4c;
     --cream-3:   #2e3745;
-    --wood:      #b0926c;   /* 패널 위 3.26:1 · 배경 위 4.26:1 */
+    --wood:      #b0926c;
     --wood-2:    #8a7355;
+    --outline-mix: #0d1219;
     --wood-hi:   #c9ab84;
 
     --ink:       #efe4cf;   /* 패널 위 7.58:1 */
@@ -284,7 +294,11 @@
 ) {
   --px-u: var(--u);
   --px-bg: var(--cream);
-  --px-bd: var(--wood);
+  /* 외곽선은 채움색에서 만든다. 검정에 가까운 선 하나로 통일하면 그림이
+     칼로 오려 붙인 것처럼 뻣뻣해진다 — 레퍼런스는 채움색과 같은 계열이고
+     조금 더 진할 뿐이다. 그래서 판 색이 무엇이든 그 색을 눌러 쓴다.
+     --px-bd 를 직접 지정하는 건 강조가 필요할 때뿐이다(위험·인용문). */
+  --px-bd: color-mix(in srgb, var(--px-bg) 44%, var(--outline-mix));
   --_c1: var(--px-u);
   --_c2: calc(var(--px-u) * 2);
   /* 판 전체를 위에서 아래로 5단계로 칠한다. 판 색이 바뀌면 따라 바뀐다.
@@ -484,7 +498,7 @@
 }
 
 /* .px-btn 만 기본 채움색을 갖는다 — 클래스로 직접 쓰는 경우 */
-.px-btn { --px-bg: var(--rose); --px-bd: var(--wood); color: var(--on-fill); }
+.px-btn { --px-bg: var(--rose); color: var(--on-fill); }
 .px-btn:hover:not(:disabled) { --px-bg: var(--rose-2); }
 
 /* 도트가 튀는 걸 싫어하는 사용자에게는 눌림 효과를 끈다 */
@@ -530,7 +544,7 @@ body {
      오브젝트는 세로로만 반복해 페이지가 길어져도 들판이 이어진다. */
   background-image: var(--scenery-l), var(--scenery-r), var(--grass-tile);
   background-position: left top, right top, left top;
-  background-size: 170px 1400px, 170px 1400px, auto;
+  background-size: 176px 2600px, 176px 2600px, auto;
   background-repeat: repeat-y, repeat-y, repeat;
   /* 도트를 확대할 일이 있어도 흐려지지 않게 */
   image-rendering: pixelated;
@@ -632,7 +646,6 @@ code {
 /* 메뉴 = 아이템 슬롯. 레퍼런스의 하단 아이템 바에서 가져왔다. */
 .site-header nav a {
   --px-bg: var(--cream-2);
-  --px-bd: var(--wood-2);
   --px-u: 3px;
   font-family: var(--font-pixel);
   font-size: 15px;              /* Galmuri14 의 격자 크기 */
@@ -643,7 +656,7 @@ code {
   padding: 7px 13px;
   transition: transform 60ms steps(1);
 }
-.site-header nav a:hover { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
+.site-header nav a:hover { --px-bg: var(--hover-fill); }
 .site-header nav a.active {
   /* 현재 위치는 채움색으로 알린다. 굵기를 쓰지 않는다 —
      Galmuri14 에는 Bold 가 없어서 가짜 굵게가 걸릴 자리다. */
@@ -663,7 +676,6 @@ main {
    잔디 위에 글자가 직접 놓이지 않게 한다 — 가독성 규칙 1번이 여기서 지켜진다. */
 .page-sheet {
   --px-bg: var(--cream);
-  --px-bd: var(--wood);
   padding: 2rem 1.75rem 2.5rem;
 }
 @media (max-width: 520px) {
@@ -717,7 +729,7 @@ h1 {
 }
 
 /* ── 들판 오브젝트를 끄는 지점 ──
-   본문 판 920px + 좌우 오브젝트 띠 170px 씩 = 1260px 이 필요하다.
+   본문 판 920px + 좌우 오브젝트 띠 176px 씩 = 1272px 이 필요하다.
    그보다 좁으면 오브젝트가 판 뒤로 밀려 반쪽만 삐져나온다 — 아예 끈다.
    이 규칙은 낮/밤 두 블록보다 뒤에 있어야 둘 다 덮는다. */
 @media (max-width: 1299px) {

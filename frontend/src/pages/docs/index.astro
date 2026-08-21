@@ -85,19 +85,32 @@ const items = docs
 </BaseLayout>
 
 <style is:global>
+
+  /* ── 이 화면은 판을 단색으로 칠한다 ──
+     램프(5단계 음영)를 끄는 방법은 단계 색을 전부 판 색으로 돌려놓는 것이다.
+     디더링 띠도 같은 색이 되어 함께 사라진다.
+     긴 문서에 세로 단계를 주면 글을 읽는 동안 바닥색이 계속 변해서
+     문서가 토막토막 잘린 것처럼 보인다. */
+  .page-sheet,
+  .doc-list a {
+    --_s1: var(--px-bg);
+    --_s2: var(--px-bg);
+    --_s3: var(--px-bg);
+    --_s4: var(--px-bg);
+    --_s5: var(--px-bg);
+  }
   /* h1 · .lede 는 pixel.css 에서 전역으로 잡는다 — 여기서 다시 정의하지 않는다 */
   .doc-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; }
 
   /* 문서 한 건 = 책장에 꽂힌 두루마리 한 장 */
   .doc-list a {
     --px-bg: var(--cream-2);
-    --px-bd: var(--wood-2);
     display: grid; gap: 0.35rem;
     padding: 1.15rem 1.3rem;
     text-decoration: none; color: var(--ink);
     transition: transform 60ms steps(1);
   }
-  .doc-list a:hover { --px-bg: var(--hover-fill); --px-bd: var(--wood); }
+  .doc-list a:hover { --px-bg: var(--hover-fill); }
   /* 누르면 도트 한 칸 내려간다 — 버튼과 같은 감각 */
   .doc-list a:active { transform: translateY(var(--u)); }
 
