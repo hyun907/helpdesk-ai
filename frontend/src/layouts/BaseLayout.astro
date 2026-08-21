@@ -74,10 +74,11 @@ const nav = [
     display: inline-flex; align-items: center; gap: 0.5rem;
     font-family: var(--font-pixel);
     font-size: 15px; line-height: 30px;
-    color: var(--ink-grass);
+    /* 헤더는 잔디가 아니라 나무 팻말(--sign) 위다. 글자색도 그 팔레트에서 가져온다 —
+       잔디용 --ink-grass 를 여기 쓰면 갈색 위 갈색이 되어 대비가 1.42:1 까지 떨어진다. */
+    color: var(--sign-ink);
   }
-  .session-badge.anon { opacity: 0.75; }
-  .session-badge .who { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--ink-grass); }
+  .session-badge .who { display: inline-flex; align-items: center; gap: 0.35rem; color: inherit; }
   /* GM 표식 — 채움 배지 하나. 아이콘을 더 늘리지 않는다. */
   .session-badge .role {
     padding: 0 0.4em;
@@ -85,13 +86,17 @@ const nav = [
     box-shadow: 0 0 0 var(--u) var(--wood-2);
   }
   .session-badge button {
-    font: inherit; color: var(--ink-grass);
+    font: inherit; color: inherit;
     background: none; border: 0; padding: 0;
     text-decoration: underline; text-underline-offset: 3px;
+    text-decoration-thickness: 2px;
     cursor: pointer;
   }
-  .session-badge button:hover { color: var(--rose-deep); }
-  .session-badge button:focus-visible { outline: 3px solid var(--rose-deep); outline-offset: 2px; }
+  /* hover 로 글자색을 낮추지 않는다 — 이 배경에서 더 밝은 색이 없어서 무엇으로 바꾸든
+     대비가 내려간다. 색은 그대로 두고 밑줄만 굵고 분홍으로 바꾼다. */
+  .session-badge button:hover { text-decoration-color: var(--sign-accent); text-decoration-thickness: 3px; }
+  /* 포커스 링도 --rose-deep 은 이 갈색 위에서 1.03:1 로 사실상 안 보인다. */
+  .session-badge button:focus-visible { outline: 3px solid var(--sign-ink); outline-offset: 2px; }
 
   /* 관리 메뉴는 GM 에게만 보인다.
      역할을 모르는 동안(정적 HTML 이 뜬 직후)에도 감춰 둔다 — 잠깐 보였다 사라지면
