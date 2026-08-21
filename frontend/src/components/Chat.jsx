@@ -11,7 +11,18 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
-  const [sessionId, setSessionId] = useState(() => newSessionId());
+  // 세션 ID 는 렌더 중에 만들지 않는다. 마운트된 뒤 아래 useEffect 에서 붙인다.
+  //
+  // 이 화면은 정적으로 빌드된다(astro.config.mjs 의 output: 'static').
+  // 렌더 중에 만들면 빌드 시점에 뽑힌 값 하나가 모든 방문자의 HTML 에 그대로 박히고,
+  // 브라우저는 hydration 때 다시 뽑아 서로 어긋난다 — React 가 불일치를 감지해
+  // 트리를 통째로 버리고 다시 그린다(첫 렌더가 두 번 일어난다).
+  // 게다가 값이 맞았더라도 모든 사용자가 같은 세션 ID 를 쓰게 되어 의미가 없다.
+  const [sessionId, setSessionId] = useState(null);
+
+  useEffect(() => {
+    setSessionId((prev) => prev ?? newSessionId());
+  }, []);
 
   const listRef = useRef(null);
   const buffer = useRef('');      // 아직 화면에 반영되지 않은 토큰
@@ -65,6 +76,11 @@ export default function Chat() {
     const question = draft.trim();
     if (!question || busy) return;
 
+    // 마운트 직후 effect 가 돌기 전에 눌렸다면 여기서 만든다.
+    // null 을 그대로 보내면 백엔드가 대화 이력을 묶을 키를 잃는다.
+    const session = sessionId ?? newSessionId();
+    if (session !== sessionId) setSessionId(session);
+
     setDraft('');
     setBusy(true);
     buffer.current = '';
@@ -80,7 +96,7 @@ export default function Chat() {
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-        body: JSON.stringify({ question, sessionId }),
+        body: JSON.stringify({ question, sessionId: session }),
       });
 
       if (!res.ok || !res.body) {
@@ -110,7 +126,7 @@ export default function Chat() {
   return (
     <div className="chat">
       <div className="chat-head">
-        <span className="session">세션 <code>{sessionId}</code></span>
+        <span className="session">세션 <code>{sessionId ?? '…'}</code></span>
         <button type="button" className="ghost" onClick={reset} disabled={busy || !messages.length}>
           새 상담
         </button>
