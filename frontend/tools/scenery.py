@@ -26,6 +26,7 @@
 #   w  나무 밝음 v  나무 중간
 #   p  갓·꽃잎   q  갓 그늘   y  꽃술   o  갓 반점
 #   s  돌 밝음   t  돌 중간   u  돌 그늘
+#   e  버섯대     f  버섯대 그늘
 #   m  줄기      l  잎
 SPRITES = {}
 
@@ -78,18 +79,17 @@ SPRITES['bush'] = [
 ]
 
 SPRITES['mushroom'] = [
-    "...XXXXX...",
-    ".XXpppppXX.",
-    "XppopppqqqX",
-    "XpppppoqqqX",
-    "XppoppqqqqX",
-    ".XqqqqqqqX.",
-    "..XXsssXX..",
-    "...XsstX...",
-    "...XsstX...",
-    "...XsstX...",
-    "..XssttX...",
-    "..XXXXXX...",
+    "....XXXXX....",
+    "..XXpppppXX..",
+    ".XppppppppqX.",
+    "XppppopppqqqX",
+    "XpoppppppqqqX",
+    "XqqqqqqqqqqqX",   # 갓 아랫면(주름) — 이 한 줄이 갓과 대를 갈라 준다
+    ".XXXXeefXXXX.",   # 갓 끝단이 대보다 넓게 걸쳐야 버섯으로 보인다
+    "....XeefX....",
+    "....XeefX....",
+    "...XeeffX....",
+    "...XXXXXX....",
 ]
 
 SPRITES['flower'] = [
@@ -137,6 +137,7 @@ DAY = {
     'w': '#c19a6b', 'v': '#a67c50',
     'p': '#f4c3cc', 'q': '#e2a0ad', 'y': '#f2cf87', 'o': '#fdf3e4',
     's': '#d8d7ca', 't': '#b8b7a8', 'u': '#999888',
+    'e': '#fbf2df', 'f': '#e6d8bd',
     'm': '#7fae5c', 'l': '#9ec97a',
 }
 # 재료별 외곽선 — 'X' 는 잎 기준이라, 다른 재료는 여기서 갈아 끼운다
@@ -144,6 +145,7 @@ OUTLINE_BY_MATERIAL = {
     'w': '#7b5733', 'v': '#7b5733',
     'p': '#c07d8e', 'q': '#c07d8e', 'y': '#c07d8e', 'o': '#c07d8e',
     's': '#7f7e70', 't': '#7f7e70', 'u': '#7f7e70',
+    'e': '#c2ac86', 'f': '#c2ac86',
 }
 
 
@@ -171,19 +173,22 @@ def resolve(rows):
             if ch != 'X':
                 out[(x, y)] = DAY[ch]
                 continue
-            mats = []
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < w and 0 <= ny < h:
-                    c = rows[ny][nx]
-                    if c not in '.X':
-                        mats.append(c)
-            col = DAY['X']
-            for m in mats:
-                if m in OUTLINE_BY_MATERIAL:
-                    col = OUTLINE_BY_MATERIAL[m]
+            # 상하좌우를 먼저 보고, 없으면 대각선까지 본다.
+            # 대각선을 안 보면 밑동 모서리처럼 사방이 외곽선인 칸이 기본값(잎 초록)으로
+            # 남아, 나무 밑동과 버섯 대 끝에 초록 점이 찍힌다.
+            col = None
+            for ring in (((1, 0), (-1, 0), (0, 1), (0, -1)),
+                         ((1, 1), (1, -1), (-1, 1), (-1, -1))):
+                for dx, dy in ring:
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < w and 0 <= ny < h:
+                        c = rows[ny][nx]
+                        if c not in '.X' and c in OUTLINE_BY_MATERIAL:
+                            col = OUTLINE_BY_MATERIAL[c]
+                            break
+                if col:
                     break
-            out[(x, y)] = col
+            out[(x, y)] = col or DAY['X']
     return out
 
 
@@ -204,9 +209,9 @@ SEED = 20260821
 
 # (이름, 도트 크기, 뽑을 개수) — 큰 것은 드물게, 작은 것은 흔하게
 POPULATION = [
-    ('tree',     4, 5), ('tree',     3, 4),
-    ('tree2',    4, 4), ('tree2',    3, 4),
-    ('bush',     4, 6), ('bush',     3, 7),
+    ('tree',     4, 3), ('tree',     3, 2),
+    ('tree2',    4, 2), ('tree2',    3, 2),
+    ('bush',     4, 7), ('bush',     3, 9),
     ('stone',    3, 5), ('stone',    2, 5),
     ('mushroom', 3, 5), ('mushroom', 2, 6),
     ('flower',   3, 9), ('flower',   2, 11),
