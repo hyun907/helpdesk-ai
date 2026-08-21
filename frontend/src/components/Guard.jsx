@@ -4,29 +4,29 @@ import { read, subscribe, login, clear } from '../lib/auth.js';
 /**
  * 로그인 상태를 구독한다.
  *
- * 첫 렌더에서는 무조건 null 을 반환한다 — sessionStorage 를 바로 읽지 않는다.
- * Astro 가 이 컴포넌트를 서버에서 한 번 HTML 로 그려 두기 때문이다. 서버에는 저장소가
- * 없으니 거기서는 항상 "로그아웃"으로 그려지는데, 클라이언트 첫 렌더가 "로그인됨"으로
- * 시작하면 두 결과가 어긋나 hydration 이 깨진다. 첫 렌더를 맞춰 두고 effect 에서 올린다.
+ * 첫 렌더에서 sessionStorage 를 그대로 읽는다. 이게 가능한 이유는 이 훅을 쓰는
+ * 아일랜드를 전부 client:only 로 내렸기 때문이다 — 서버가 미리 그려 둔 HTML 이 없으니
+ * 어긋날 상대가 없다. (client:load 시절에는 서버 렌더가 항상 "로그아웃"이라
+ * 첫 렌더를 null 로 맞춘 뒤 effect 에서 올려야 했고, 그 한 프레임이 페이지를 이동할 때마다
+ * "확인 중…" 으로 깜빡였다.)
  */
 export function useAuth() {
-  const [cred, setCred] = useState(null);
-  const [ready, setReady] = useState(false);
+  const [cred, setCred] = useState(read);
 
   useEffect(() => {
+    // 첫 렌더와 이 시점 사이에 값이 바뀌었을 수 있다(다른 아일랜드의 로그인/로그아웃).
     setCred(read());
-    setReady(true);
     return subscribe(setCred);
   }, []);
 
-  return { cred, ready };
+  return cred;
 }
 
 /**
  * 인증 게이트를 씌운 컴포넌트를 만든다.
  *
  * 왜 HOC 인가 — Astro 로 감싸지 않기 위해서다.
- * `<Guard client:load><Chat /></Guard>` 처럼 .astro 에서 중첩하면 안쪽 Chat 은
+ * `<Guard client:only><Chat /></Guard>` 처럼 .astro 에서 중첩하면 안쪽 Chat 은
  * React 엘리먼트가 아니라 Astro 가 미리 그려 둔 정적 HTML 로 들어온다. 그러면
  * 화면은 멀쩡해 보이는데 onChange·onSubmit 이 아무 데도 붙지 않아 입력이 통째로 죽는다.
  * (겪고 나서야 보이는 종류의 사고다 — 눌리지 않는 이유가 화면에는 드러나지 않는다.)
@@ -49,9 +49,8 @@ export function withGuard(Inner, { admin = false } = {}) {
 }
 
 function Guard({ admin = false, children }) {
-  const { cred, ready } = useAuth();
+  const cred = useAuth();
 
-  if (!ready) return <p className="notice">확인 중…</p>;
   if (!cred) return <LoginForm admin={admin} />;
 
   if (admin && !cred.admin) {

@@ -13,9 +13,11 @@ import InspectorPage from '../components/InspectorPage.jsx';
     검색이 잘못됐는데 프롬프트를 고치는 일을 막기 위한 창구입니다.
   </p>
 
-  {/* client:load — 이 페이지에서 유일하게 자바스크립트가 실리는 지점이다.
-      나머지(헤더·문서 페이지)는 전부 정적 HTML 로 나간다. */}
-  <InspectorPage client:load />
+  {/* 이 페이지에서 자바스크립트가 실리는 유일한 지점이다.
+      나머지(문서 페이지)는 전부 정적 HTML 로 나간다.
+      client:only 인 이유는 index.astro 와 같다 — 서버가 그려 둔 로그인 폼이
+      화면 전환 때 한 프레임 스쳐 지나가는 것을 없앤다. */}
+  <InspectorPage client:only="react" />
 </BaseLayout>
 
 <style is:global>

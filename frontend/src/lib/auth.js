@@ -13,7 +13,9 @@
  * 운영이라면 서버가 발급한 단기 토큰을 HttpOnly 쿠키로 내리고 이 파일은 사라져야 한다.
  */
 
-const KEY = 'helpdesk.cred';
+/** 보관 키. BaseLayout 의 첫 페인트 전 스크립트도 이 값을 읽는다 —
+ *  거기서 문자열을 다시 적지 않도록 내보낸다(두 곳이 어긋나면 메뉴가 안 뜬다). */
+export const CRED_KEY = 'helpdesk.cred';
 
 /** 상태가 바뀌면 화면 여러 곳이 같이 움직여야 한다(헤더 배지·게이트·본문). */
 const listeners = new Set();
@@ -31,7 +33,7 @@ function emit() {
 export function read() {
   if (typeof sessionStorage === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(KEY);
+    const raw = sessionStorage.getItem(CRED_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     // 저장소를 막아 둔 브라우저(시크릿 모드 설정에 따라)에서는 접근 자체가 던진다.
@@ -42,8 +44,8 @@ export function read() {
 
 function write(value) {
   try {
-    if (value) sessionStorage.setItem(KEY, JSON.stringify(value));
-    else sessionStorage.removeItem(KEY);
+    if (value) sessionStorage.setItem(CRED_KEY, JSON.stringify(value));
+    else sessionStorage.removeItem(CRED_KEY);
   } catch {
     /* 저장 못 해도 이번 세션 동안 메모리로는 못 버틴다 — 조용히 넘어간다 */
   }

@@ -14,8 +14,11 @@ import ChatPage from '../components/ChatPage.jsx';
   </p>
 
   {/* 로그인 게이트는 ChatPage 안(React)에서 씌운다 — .astro 에서 감싸면
-      안쪽이 정적 HTML 로 들어와 하이드레이션되지 않는다. */}
-  <ChatPage client:load />
+      안쪽이 정적 HTML 로 들어와 하이드레이션되지 않는다.
+
+      client:only — 서버 렌더는 로그인 상태를 모르니 언제나 로그인 폼을 그린다.
+      그 HTML 이 정적으로 박혀 있으면 이동할 때마다 "확인 중…" 이 한 번 지나간다. */}
+  <ChatPage client:only="react" />
 </BaseLayout>
 
 <style is:global>
